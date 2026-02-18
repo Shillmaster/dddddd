@@ -341,7 +341,7 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
 
   const hoverCandle = hoverIndex !== null && chart?.candles?.[hoverIndex];
   const hoverSma = hoverCandle && chart?.sma200?.find(s => s.t === hoverCandle.t)?.value;
-  const hoverPhase = hoverCandle && chart?.phaseZones?.find(
+  const hoverPhaseName = hoverCandle && chart?.phaseZones?.find(
     z => hoverCandle.t >= z.from && hoverCandle.t <= z.to
   )?.phase;
 
@@ -349,8 +349,14 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
     <div style={{ position: "relative" }}>
       <canvas ref={ref} style={{ cursor: "crosshair" }} />
       {hoverCandle && (
-        <Tooltip candle={hoverCandle} sma={hoverSma} phase={hoverPhase} />
+        <Tooltip candle={hoverCandle} sma={hoverSma} phase={hoverPhaseName} />
       )}
+      {/* BLOCK 73.5.1: Phase Tooltip */}
+      <PhaseTooltip 
+        phase={hoveredPhase}
+        position={phaseTooltipPos}
+        visible={!!hoveredPhase}
+      />
     </div>
   );
 }
