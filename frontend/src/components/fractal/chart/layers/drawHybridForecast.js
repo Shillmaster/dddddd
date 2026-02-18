@@ -227,6 +227,12 @@ export function drawHybridForecast(
     return m && m.t > 0 && m.t < N; // Only intermediate markers
   });
   
+  // Debug: log markers
+  console.log('[BLOCK73.3] unifiedPath exists:', !!unifiedPath);
+  console.log('[BLOCK73.3] N:', N);
+  console.log('[BLOCK73.3] markerKeys:', markerKeys);
+  console.log('[BLOCK73.3] unifiedMarkers:', unifiedMarkers);
+  
   // Fallback to legacy markers if no unified markers
   const legacyMarkers = markers.length > 0 
     ? markers.filter(m => (m.day || m.dayIndex + 1) < N)
