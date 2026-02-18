@@ -332,7 +332,7 @@ const FractalTerminal = () => {
             </div>
           </div>
           
-          {/* Chart Render based on mode */}
+          {/* Chart Render based on mode (3 modes: price/replay/hybrid) */}
           <div className="min-h-[450px]">
             {isLoading ? (
               <LoadingSkeleton />
@@ -348,9 +348,19 @@ const FractalTerminal = () => {
                   />
                 )}
                 
-                {chartMode === 'fractal' && (
+                {chartMode === 'replay' && (
                   <FractalOverlaySection 
                     symbol={symbol}
+                    focus={focus}
+                    focusPack={focusData}
+                  />
+                )}
+                
+                {chartMode === 'hybrid' && (
+                  <FractalHybridChart
+                    symbol={symbol}
+                    width={1100}
+                    height={420}
                     focus={focus}
                     focusPack={focusData}
                   />
