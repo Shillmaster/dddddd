@@ -456,8 +456,12 @@ export class PhasePerformanceService {
   ): Promise<PhasePerformanceResponse> {
     const { symbol, tier, h, preset = 'BALANCED', role = 'ACTIVE' } = query;
     
+    console.log(`[PhasePerformance] Fetching candles for ${symbol} from ${fromDate.toISOString()} to ${toDate.toISOString()}`);
+    
     // Get candles for analysis
     const candles = await this.canonicalStore.getRange(symbol, '1D', fromDate, toDate);
+    console.log(`[PhasePerformance] Got ${candles?.length || 0} candles`);
+    
     if (!candles || candles.length < 100) {
       return this.buildEmptyResponse(query, fromDate, toDate, ['NO_CANDLE_DATA']);
     }
