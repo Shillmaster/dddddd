@@ -674,7 +674,7 @@ export class PhasePerformanceService {
     }
     
     const globalStats = this.calcStats(allReturns, allDates);
-    const phases = this.buildPhaseStats(phaseData, new Date());
+    const phases = this.buildPhaseStats(phaseData, new Date(), tier); // Tier-aware
     
     return {
       meta: {
@@ -685,7 +685,8 @@ export class PhasePerformanceService {
         role,
         from: fromDate.toISOString().slice(0, 10),
         to: toDate.toISOString().slice(0, 10),
-        resolvedCount: allReturns.length
+        resolvedCount: allReturns.length,
+        minSamplesForTrust: TIER_SAMPLE_THRESHOLDS[tier].OK // Add this for UI
       },
       global: globalStats,
       phases,
