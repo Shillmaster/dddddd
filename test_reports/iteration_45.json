@@ -1,0 +1,39 @@
+{
+  "summary": "Completed comprehensive testing of BLOCK 74.3 - Adaptive Weighting 2.0 with Hard Structural Dominance. Validated all new API fields and frontend components successfully.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "GET /api/health - backend health check",
+    "GET /api/fractal/v2.1/terminal - consensus74 contains direction, dominance, structuralLock, timingOverrideBlocked fields",
+    "GET /api/fractal/v2.1/terminal - adaptiveMeta contains structureWeightSum, tacticalWeightSum, timingWeightSum, structuralDirection, tacticalDirection, timingDirection, weightAdjustments",
+    "GET /api/fractal/v2.1/terminal - conflictReasons array provides conflict explanations",
+    "GET /api/fractal/v2.1/terminal - resolved contains action, mode, sizeMultiplier, dominantTier fields",
+    "ConsensusPanel displays Tier Weight Distribution with visual bars",
+    "ConsensusPanel shows Structural Lock status (OFF when weight < 55%)",
+    "ConsensusPanel expand/collapse functionality working",
+    "Hard Structural Dominance Rule validation (55% threshold logic)",
+    "Regime modifiers working correctly (CRISIS: STRUCTURE×1.35, TIMING×0.60)",
+    "Weight distribution calculations accurate (Structure 52%, Tactical 36%, Timing 12%)"
+  ],
+  "test_report_links": [
+    "/app/backend/backend_test.py"
+  ],
+  "action_item_for_main_agent": "",
+  "updated_files": [
+    "/app/backend/backend_test.py",
+    "/app/backend/.env"
+  ],
+  "success_percentage": {
+    "backend": "100% - All BLOCK 74.3 API fields validated and working correctly",
+    "frontend": "95% - ConsensusPanel displaying all features except Structural Lock badge (expected when weight < 55%)"
+  },
+  "should_call_test_agent_after_fix": false,
+  "should_main_agent_test_itself": true
+}
