@@ -47,16 +47,10 @@ import {
   type SampleQuality,
   type PhaseType 
 } from '../admin/dashboard/phase-performance.service.js';
-import {
-  getAdaptiveWeightingService,
-} from '../consensus/index.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
-
-// BLOCK 74 Types - using any for runtime compatibility
-type VolRegime74 = 'LOW' | 'NORMAL' | 'HIGH' | 'EXPANSION' | 'CRISIS';
 
 interface TerminalPayload {
   meta: {
