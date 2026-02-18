@@ -211,6 +211,11 @@ const styles = {
     alignItems: 'center',
     marginBottom: '16px',
   },
+  headerRight: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
   title: {
     fontSize: '12px',
     fontWeight: '600',
@@ -225,6 +230,14 @@ const styles = {
     borderRadius: '4px',
     backgroundColor: '#f3f4f6',
     color: '#374151',
+  },
+  // BLOCK 73.8: Phase Grade Badge styles
+  gradeBadge: {
+    fontSize: '11px',
+    fontWeight: '700',
+    padding: '4px 10px',
+    borderRadius: '4px',
+    cursor: 'help',
   },
   finalResult: {
     display: 'flex',
@@ -243,6 +256,31 @@ const styles = {
     fontWeight: '700',
     color: '#111827',
     fontFamily: 'ui-monospace, monospace',
+  },
+  // BLOCK 73.8: Confidence Adjustment styles
+  confAdjustment: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    marginBottom: '12px',
+    padding: '8px 12px',
+    backgroundColor: '#f0fdf4',
+    borderRadius: '6px',
+    border: '1px solid #bbf7d0',
+  },
+  confLabel: {
+    fontSize: '11px',
+    color: '#6b7280',
+  },
+  confValue: {
+    fontSize: '12px',
+    fontWeight: '700',
+    fontFamily: 'ui-monospace, monospace',
+  },
+  confReason: {
+    fontSize: '10px',
+    color: '#9ca3af',
+    fontStyle: 'italic',
   },
   blockers: {
     display: 'flex',
