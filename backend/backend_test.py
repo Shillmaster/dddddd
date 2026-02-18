@@ -4144,10 +4144,88 @@ class FractalAPITester:
             "all_results": self.test_results
         }
 
+    def test_fractal_terminal_consensus74(self):
+        """Test /api/fractal/v2.1/terminal endpoint with BLOCK 74.3 consensus74 validation"""
+        params = {"symbol": "BTC", "set": "extended"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/terminal", params=params, timeout=30)
+        
+        if success:
+            data = details.get("response_data", {})
+            
+            # Check basic structure
+            if not isinstance(data, dict):
+                success = False
+                details["error"] = "Expected JSON object response"
+            elif "consensus74" not in data:
+                success = False
+                details["error"] = "Missing 'consensus74' field in terminal response"
+            else:
+                consensus74 = data["consensus74"]
+                
+                # BLOCK 74.3: Validate required consensus74 fields
+                required_fields = ["direction", "dominance", "structuralLock", "timingOverrideBlocked"]
+                missing_fields = [field for field in required_fields if field not in consensus74]
+                if missing_fields:
+                    success = False
+                    details["error"] = f"Missing consensus74 fields: {missing_fields}"
+                
+                # Validate adaptiveMeta structure
+                if success and "adaptiveMeta" in consensus74:
+                    adaptive_meta = consensus74["adaptiveMeta"]
+                    required_adaptive_fields = [
+                        "structureWeightSum", "tacticalWeightSum", "timingWeightSum",
+                        "structuralDirection", "tacticalDirection", "timingDirection",
+                        "weightAdjustments"
+                    ]
+                    missing_adaptive = [field for field in required_adaptive_fields if field not in adaptive_meta]
+                    if missing_adaptive:
+                        success = False
+                        details["error"] = f"Missing adaptiveMeta fields: {missing_adaptive}"
+                    else:
+                        # Validate weight adjustments structure
+                        weight_adj = adaptive_meta.get("weightAdjustments", {})
+                        required_weight_fields = ["structureBoost", "tacticalBoost", "timingClamp"]
+                        missing_weight = [field for field in required_weight_fields if field not in weight_adj]
+                        if missing_weight:
+                            success = False
+                            details["error"] = f"Missing weightAdjustments fields: {missing_weight}"
+                        else:
+                            details["consensus74_validation"] = {
+                                "direction": consensus74.get("direction"),
+                                "dominance": consensus74.get("dominance"),
+                                "structural_lock": consensus74.get("structuralLock"),
+                                "timing_override_blocked": consensus74.get("timingOverrideBlocked"),
+                                "structure_weight": adaptive_meta.get("structureWeightSum"),
+                                "tactical_weight": adaptive_meta.get("tacticalWeightSum"),
+                                "timing_weight": adaptive_meta.get("timingWeightSum"),
+                                "regime": adaptive_meta.get("regime")
+                            }
+                elif success:
+                    success = False
+                    details["error"] = "Missing 'adaptiveMeta' field in consensus74"
+        
+        self.log_test("Fractal Terminal Consensus74 (BLOCK 74.3)", success, details)
+        return success
+
+    def run_focused_tests(self):
+        """Run the focused tests for the review request"""
+        print("🔍 Running Focused Fractal Backend Tests")
+        print("=" * 50)
+        
+        # Core health checks
+        self.test_python_gateway_health()
+        self.test_api_health()
+        self.test_fractal_health()
+        
+        # Main terminal endpoint test
+        self.test_fractal_terminal_consensus74()
+        
+        return self.tests_passed, self.tests_run
+
 def main():
     """Main test execution"""
-    print("🔧 Fractal Backend Testing Suite - PHASE 2 P0.1-P0.4: Terminal Aggregator System")
-    print(f"Testing backend at: https://fractal-engine.preview.emergentagent.com")
+    print("🔧 Fractal Backend Testing Suite - Focused Tests for Review Request")
+    print(f"Testing backend at: https://fractal-frontend-1.preview.emergentagent.com")
     print(f"Test started at: {datetime.now().isoformat()}")
     print()
     
@@ -4156,14 +4234,16 @@ def main():
     time.sleep(2)
     
     tester = FractalAPITester()
-    results = tester.run_all_tests()
+    passed, total = tester.run_focused_tests()
     
-    # Return appropriate exit code based on PHASE 2 success
-    if results["phase2_success"] >= 80:
-        print("🎉 PHASE 2 P0.1-P0.4 Terminal Aggregator testing completed successfully!")
+    print("\n" + "=" * 50)
+    print(f"📊 Test Results: {passed}/{total} passed")
+    
+    if passed == total:
+        print("✅ All focused tests passed!")
         return 0
     else:
-        print("💥 PHASE 2 P0.1-P0.4 Terminal Aggregator testing found critical issues!")
+        print(f"❌ {total - passed} tests failed")
         return 1
 
 if __name__ == "__main__":
