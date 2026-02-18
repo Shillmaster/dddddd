@@ -202,17 +202,105 @@ export function ConsensusPanel({ consensus74 }) {
             </div>
           )}
           
+          {/* BLOCK 74.3: Tier Weight Breakdown */}
+          <div style={styles.tierWeightsSection}>
+            <div style={styles.sectionTitle}>Tier Weight Distribution</div>
+            <div style={styles.tierWeightsGrid}>
+              <div style={styles.tierWeightItem}>
+                <div style={styles.tierWeightLabel}>STRUCTURE</div>
+                <div style={styles.tierWeightBarContainer}>
+                  <div style={{
+                    ...styles.tierWeightBar,
+                    width: `${(adaptiveMeta?.structureWeightSum || 0) * 100}%`,
+                    backgroundColor: '#ef4444',
+                  }} />
+                </div>
+                <span style={styles.tierWeightValue}>
+                  {((adaptiveMeta?.structureWeightSum || 0) * 100).toFixed(0)}%
+                </span>
+                <span style={{
+                  ...styles.tierDirection,
+                  color: adaptiveMeta?.structuralDirection === 'BULLISH' ? '#16a34a' : 
+                         adaptiveMeta?.structuralDirection === 'BEARISH' ? '#dc2626' : '#6b7280'
+                }}>
+                  {adaptiveMeta?.structuralDirection === 'BULLISH' ? '↑' : 
+                   adaptiveMeta?.structuralDirection === 'BEARISH' ? '↓' : '→'}
+                </span>
+              </div>
+              <div style={styles.tierWeightItem}>
+                <div style={styles.tierWeightLabel}>TACTICAL</div>
+                <div style={styles.tierWeightBarContainer}>
+                  <div style={{
+                    ...styles.tierWeightBar,
+                    width: `${(adaptiveMeta?.tacticalWeightSum || 0) * 100}%`,
+                    backgroundColor: '#8b5cf6',
+                  }} />
+                </div>
+                <span style={styles.tierWeightValue}>
+                  {((adaptiveMeta?.tacticalWeightSum || 0) * 100).toFixed(0)}%
+                </span>
+                <span style={{
+                  ...styles.tierDirection,
+                  color: adaptiveMeta?.tacticalDirection === 'BULLISH' ? '#16a34a' : 
+                         adaptiveMeta?.tacticalDirection === 'BEARISH' ? '#dc2626' : '#6b7280'
+                }}>
+                  {adaptiveMeta?.tacticalDirection === 'BULLISH' ? '↑' : 
+                   adaptiveMeta?.tacticalDirection === 'BEARISH' ? '↓' : '→'}
+                </span>
+              </div>
+              <div style={styles.tierWeightItem}>
+                <div style={styles.tierWeightLabel}>TIMING</div>
+                <div style={styles.tierWeightBarContainer}>
+                  <div style={{
+                    ...styles.tierWeightBar,
+                    width: `${(adaptiveMeta?.timingWeightSum || 0) * 100}%`,
+                    backgroundColor: '#3b82f6',
+                  }} />
+                </div>
+                <span style={styles.tierWeightValue}>
+                  {((adaptiveMeta?.timingWeightSum || 0) * 100).toFixed(0)}%
+                </span>
+                <span style={{
+                  ...styles.tierDirection,
+                  color: adaptiveMeta?.timingDirection === 'BULLISH' ? '#16a34a' : 
+                         adaptiveMeta?.timingDirection === 'BEARISH' ? '#dc2626' : '#6b7280'
+                }}>
+                  {adaptiveMeta?.timingDirection === 'BULLISH' ? '↑' : 
+                   adaptiveMeta?.timingDirection === 'BEARISH' ? '↓' : '→'}
+                </span>
+              </div>
+            </div>
+          </div>
+          
           {/* Adaptive Meta */}
           <div style={styles.metaSection}>
-            <div style={styles.sectionTitle}>Adaptive Weighting</div>
+            <div style={styles.sectionTitle}>Adaptive Weighting 2.0</div>
             <div style={styles.metaGrid}>
               <div style={styles.metaItem}>
                 <span style={styles.metaLabel}>Regime</span>
                 <span style={styles.metaValue}>{adaptiveMeta?.regime || 'NORMAL'}</span>
               </div>
               <div style={styles.metaItem}>
-                <span style={styles.metaLabel}>Structure Dominance</span>
-                <span style={styles.metaValue}>{adaptiveMeta?.structuralDominance ? 'YES' : 'NO'}</span>
+                <span style={styles.metaLabel}>Dominance</span>
+                <span style={{
+                  ...styles.metaValue,
+                  color: structuralLock ? '#3730a3' : '#374151',
+                  fontWeight: structuralLock ? '700' : '600',
+                }}>{dominance || 'TACTICAL'}</span>
+              </div>
+              <div style={styles.metaItem}>
+                <span style={styles.metaLabel}>Struct Lock</span>
+                <span style={{
+                  ...styles.metaValue,
+                  color: structuralLock ? '#3730a3' : '#6b7280',
+                }}>{structuralLock ? 'ACTIVE' : 'OFF'}</span>
+              </div>
+              <div style={styles.metaItem}>
+                <span style={styles.metaLabel}>Timing Block</span>
+                <span style={{
+                  ...styles.metaValue,
+                  color: timingOverrideBlocked ? '#dc2626' : '#6b7280',
+                }}>{timingOverrideBlocked ? 'BLOCKED' : 'NO'}</span>
               </div>
               <div style={styles.metaItem}>
                 <span style={styles.metaLabel}>Div Penalties</span>
@@ -228,6 +316,17 @@ export function ConsensusPanel({ consensus74 }) {
                 </div>
               )}
             </div>
+            {/* Regime Impact */}
+            {adaptiveMeta?.weightAdjustments && (
+              <div style={styles.regimeImpact}>
+                <span style={styles.regimeImpactLabel}>Regime Impact:</span>
+                <span style={styles.regimeImpactValues}>
+                  Struct ×{adaptiveMeta.weightAdjustments.structureBoost?.toFixed(2)} | 
+                  Tact ×{adaptiveMeta.weightAdjustments.tacticalBoost?.toFixed(2)} | 
+                  Time ×{adaptiveMeta.weightAdjustments.timingClamp?.toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}
