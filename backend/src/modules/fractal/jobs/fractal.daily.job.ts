@@ -364,6 +364,42 @@ export class FractalDailyJobService {
         errors.push(`AUDIT_LOG: ${err.message}`);
       }
       
+      // ═══════════════════════════════════════════════════════════
+      // STEP 6: BLOCK 75 — Memory Snapshots (Self-Validation Layer)
+      // ═══════════════════════════════════════════════════════════
+      const step6: DailyJobStep = {
+        name: 'MEMORY_SNAPSHOTS',
+        startedAt: new Date(),
+        status: 'RUNNING'
+      };
+      context.steps.push(step6);
+      
+      try {
+        console.log(`[DailyJob] Step 6: Writing memory snapshots (BLOCK 75.1)...`);
+        
+        // Write prediction snapshots for all 6 horizons × presets × roles
+        const memoryWriteResult = await memorySnapshotWriterService.writeAllSnapshots();
+        memoryResult.snapshotsWritten = memoryWriteResult.written;
+        
+        console.log(`[DailyJob] Step 6: Resolving memory outcomes (BLOCK 75.2)...`);
+        
+        // Resolve matured outcomes
+        const memoryResolveResult = await memoryOutcomeResolverService.resolveMaturedOutcomes(symbol);
+        memoryResult.outcomesResolved = memoryResolveResult.resolved;
+        
+        step6.result = memoryResult;
+        step6.status = 'SUCCESS';
+        step6.completedAt = new Date();
+        
+        console.log(`[DailyJob] Memory: written=${memoryResult.snapshotsWritten}, resolved=${memoryResult.outcomesResolved}`);
+      } catch (err: any) {
+        step6.status = 'FAILED';
+        step6.error = err.message;
+        step6.completedAt = new Date();
+        errors.push(`MEMORY_SNAPSHOTS: ${err.message}`);
+        console.error(`[DailyJob] Memory error:`, err);
+      }
+      
       // Complete context
       context.completedAt = new Date();
       context.status = errors.length === 0 ? 'SUCCESS' : 'FAILED';
