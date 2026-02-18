@@ -17,13 +17,15 @@ import { TailRiskCard } from './TailRiskCard';
 import { SnapshotTimeline } from './SnapshotTimeline';
 import { ShadowDivergencePanel } from './shadow';
 import VolatilityTab from './VolatilityTab';
+import AlertsTab from './AlertsTab';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'shadow', label: 'Shadow Divergence' },
-  { id: 'volatility', label: 'Volatility' }
+  { id: 'volatility', label: 'Volatility' },
+  { id: 'alerts', label: 'Alerts' }
 ];
 
 export function AdminDashboard() {
