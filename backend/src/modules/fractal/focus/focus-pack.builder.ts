@@ -662,4 +662,178 @@ function buildDivergenceMetrics(
   );
 }
 
+// ═══════════════════════════════════════════════════════════════
+// BLOCK 73.3 — UNIFIED PATH INTEGRATION
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Build ForecastPack from UnifiedPath
+ * Maintains backward compatibility while using unified source
+ */
+function buildForecastPackFromUnified(
+  unifiedPath: UnifiedPath,
+  overlay: OverlayPack,
+  currentPrice: number,
+  focus: HorizonKey
+): ForecastPack {
+  const cfg = HORIZON_CONFIG[focus];
+  const N = cfg.aftermathDays;
+  
+  // Extract paths (skip t=0 for legacy format)
+  const path = unifiedPath.syntheticPath.slice(1).map(p => p.price);
+  const upperBand = unifiedPath.upperBand.slice(1).map(p => p.price);
+  const lowerBand = unifiedPath.lowerBand.slice(1).map(p => p.price);
+  
+  // Confidence decay: 1 → 0 over horizon
+  const confidenceDecay = new Array(N).fill(0).map((_, i) => 
+    Math.max(0, 1 - (i / N))
+  );
+  
+  // Convert unified markers to legacy format
+  const markers = unifiedPath.markersArray.map(m => ({
+    horizon: m.horizon,
+    dayIndex: m.t - 1, // Legacy uses 0-indexed from day 1
+    expectedReturn: m.pct / 100,
+    price: m.price
+  }));
+  
+  // Tail floor from stats
+  const tailFloor = currentPrice * (1 - Math.abs(overlay.stats.avgMaxDD));
+  
+  return {
+    path,
+    pricePath: path, // Alias for compatibility
+    upperBand,
+    lowerBand,
+    confidenceDecay,
+    markers,
+    tailFloor,
+    currentPrice,
+    startTs: unifiedPath.anchorTs,
+    // BLOCK 73.3: Include full unified path
+    unifiedPath: {
+      anchorPrice: unifiedPath.anchorPrice,
+      horizonDays: unifiedPath.horizonDays,
+      syntheticPath: unifiedPath.syntheticPath,
+      replayPath: unifiedPath.replayPath,
+      markers: unifiedPath.markers
+    }
+  };
+}
+
+/**
+ * Build NormalizedSeries from UnifiedPath
+ */
+function buildNormalizedSeriesFromUnified(
+  unifiedPath: UnifiedPath,
+  basePrice: number,
+  tier: 'TIMING' | 'TACTICAL' | 'STRUCTURE'
+): NormalizedSeries {
+  const mode: AxisMode = tier === 'STRUCTURE' ? 'PERCENT' : 'RAW';
+  
+  // Raw series (skip t=0)
+  const rawPath = unifiedPath.syntheticPath.slice(1).map(p => p.price);
+  const rawUpperBand = unifiedPath.upperBand.slice(1).map(p => p.price);
+  const rawLowerBand = unifiedPath.lowerBand.slice(1).map(p => p.price);
+  
+  // Percent series (skip t=0)
+  const percentPath = unifiedPath.syntheticPath.slice(1).map(p => p.pct);
+  const percentUpperBand = unifiedPath.upperBand.slice(1).map(p => p.pct);
+  const percentLowerBand = unifiedPath.lowerBand.slice(1).map(p => p.pct);
+  
+  // Replay
+  let rawReplay: number[] = [];
+  let percentReplay: number[] = [];
+  
+  if (unifiedPath.replayPath) {
+    rawReplay = unifiedPath.replayPath.slice(1).map(p => p.price);
+    percentReplay = unifiedPath.replayPath.slice(1).map(p => p.pct);
+  }
+  
+  // Calculate Y-axis range
+  const allPercent = [
+    ...percentPath,
+    ...percentUpperBand,
+    ...percentLowerBand,
+    ...percentReplay,
+    0
+  ].filter(v => isFinite(v));
+  
+  const allPrices = [
+    ...rawPath,
+    ...rawUpperBand,
+    ...rawLowerBand,
+    ...rawReplay,
+    basePrice
+  ].filter(v => isFinite(v));
+  
+  const minPercent = allPercent.length > 0 ? Math.min(...allPercent) : -20;
+  const maxPercent = allPercent.length > 0 ? Math.max(...allPercent) : 20;
+  const minPrice = allPrices.length > 0 ? Math.min(...allPrices) : basePrice * 0.8;
+  const maxPrice = allPrices.length > 0 ? Math.max(...allPrices) : basePrice * 1.2;
+  
+  const percentPadding = (maxPercent - minPercent) * 0.15;
+  const pricePadding = (maxPrice - minPrice) * 0.15;
+  
+  return {
+    mode,
+    basePrice,
+    rawPath,
+    percentPath,
+    rawUpperBand,
+    rawLowerBand,
+    percentUpperBand,
+    percentLowerBand,
+    rawReplay,
+    percentReplay,
+    yRange: {
+      minPercent: Math.round((minPercent - percentPadding) * 10) / 10,
+      maxPercent: Math.round((maxPercent + percentPadding) * 10) / 10,
+      minPrice: Math.round(minPrice - pricePadding),
+      maxPrice: Math.round(maxPrice + pricePadding),
+    },
+  };
+}
+
+/**
+ * Build Divergence metrics from UnifiedPath
+ */
+function buildDivergenceFromUnified(
+  unifiedPath: UnifiedPath,
+  basePrice: number,
+  horizonDays: number,
+  tier: 'TIMING' | 'TACTICAL' | 'STRUCTURE',
+  mode: AxisMode
+): DivergenceMetrics {
+  // Use unified paths (skip t=0 for divergence calc)
+  const syntheticPath = unifiedPath.syntheticPath.slice(1).map(p => p.price);
+  const replayPath = unifiedPath.replayPath?.slice(1).map(p => p.price) || [];
+  
+  if (replayPath.length === 0 || syntheticPath.length === 0) {
+    return {
+      horizonDays,
+      mode,
+      rmse: 0,
+      mape: 0,
+      maxAbsDev: 0,
+      terminalDelta: 0,
+      directionalMismatch: 0,
+      corr: 1,
+      score: 100,
+      grade: 'A',
+      flags: [],
+      samplePoints: 0,
+    };
+  }
+  
+  return calculateDivergence(
+    syntheticPath,
+    replayPath,
+    basePrice,
+    horizonDays,
+    tier,
+    mode
+  );
+}
+
 // Additional helpers already defined above
