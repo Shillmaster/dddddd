@@ -114,7 +114,17 @@ export function FractalMainChart({
 
   return (
     <div style={{ width, background: "#fff", borderRadius: 12, overflow: "hidden" }}>
-      <FractalChartCanvas chart={chart} forecast={forecast} width={width} height={height} />
+      <FractalChartCanvas 
+        chart={chart} 
+        forecast={forecast} 
+        focus={focus}
+        width={width} 
+        height={height} 
+      />
+      {/* Show 7D Summary Panel only for 7D focus */}
+      {focus === '7d' && focusPack && (
+        <ForecastSummary7d focusPack={focusPack} currentPrice={currentPrice} />
+      )}
     </div>
   );
 }
