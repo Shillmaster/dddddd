@@ -25,6 +25,7 @@ const FACTOR_LABELS = {
   TAIL_RISK: 'Tail Risk',
   RELIABILITY: 'Reliability',
   GOVERNANCE: 'Governance',
+  PHASE: 'Phase Grade',  // BLOCK 73.7
 };
 
 export function SizingBreakdown({ sizing, volatility }) {
