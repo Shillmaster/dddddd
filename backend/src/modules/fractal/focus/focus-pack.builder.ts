@@ -206,7 +206,9 @@ export async function buildFocusPack(
     normalizedSeries, 
     divergence,
     // BLOCK 73.3: Include unified path for frontend
-    unifiedPath 
+    unifiedPath,
+    // BLOCK 73.5.2: Phase filter info
+    phaseFilter 
   };
 }
 
