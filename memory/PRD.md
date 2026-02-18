@@ -159,9 +159,41 @@ Response:
 - adaptiveMeta: regime, structuralDominance, divergencePenalties, phasePenalties, stabilityGuard
 - Frontend: `ConsensusPanel.jsx` - institutional consensus display with expandable details
 
+**74.3 Adaptive Weighting 2.0 — Hard Structural Dominance (COMPLETED):**
+
+*Desk-Grade Decision Engine with Constitutional Rules*
+
+**Core Rule:** If STRUCTURE_WEIGHT >= 55% → STRUCTURE determines direction (structuralLock=true)
+- TIMING can only affect size, NOT reverse direction
+- timingOverrideBlocked = true when timing conflicts
+
+**Regime Modifiers:**
+- CRISIS: STRUCTURE ×1.35, TACTICAL ×1.10, TIMING ×0.60
+- EXPANSION: STRUCTURE ×0.85, TACTICAL ×1.05, TIMING ×1.20
+- HIGH: STRUCTURE ×1.10, TACTICAL ×1.05, TIMING ×0.85
+- LOW: STRUCTURE ×0.90, TACTICAL ×1.00, TIMING ×1.15
+- NORMAL: all ×1.00
+
+**Penalty Modifiers:**
+- Divergence Grade: A(×1.05), B(×1.00), C(×0.90), D(×0.75), F(×0.55)
+- HIGH_DIVERGENCE flag: additional ×0.85
+- Phase Quality: A(×1.10), B(×1.05), C(×1.00), D(×0.85), F(×0.65)
+
+**New API Fields in consensus74:**
+- direction, dominance, structuralLock, timingOverrideBlocked
+- adaptiveMeta: structureWeightSum, tacticalWeightSum, timingWeightSum
+- adaptiveMeta: structuralDirection, tacticalDirection, timingDirection
+- adaptiveMeta: weightAdjustments {structureBoost, tacticalBoost, timingClamp}
+
+**Frontend Updates (ConsensusPanel.jsx):**
+- 🔒 STRUCTURAL LOCK badge when structuralLock=true
+- Dominance Alert showing which tier controls direction
+- Tier Weight Distribution with visual bars
+- Regime Impact display showing boost/clamp values
+
 ## Next Tasks
-1. BLOCK 74.3 - Adaptive Weighting 2.0 (CRISIS → STRUCTURE ×1.35, TIMING ×0.60)
-2. Add Phase Strength Indicator to terminal header
-3. Test frontend components after preview servers wake up
+1. BLOCK 75 — Memory & Self-Validation Layer (weight corrections from forward truth)
+2. Consensus Drift Tracker (7d history mini-chart)
+3. Phase Strength Indicator in terminal header
 4. Production simulation testing
 
