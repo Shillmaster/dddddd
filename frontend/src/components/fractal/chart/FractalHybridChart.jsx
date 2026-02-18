@@ -153,8 +153,12 @@ export function FractalHybridChart({
   );
 }
 
-// Summary panel showing both projections
-function HybridSummaryPanel({ forecast, primaryMatch, currentPrice, focus }) {
+/**
+ * BLOCK 73.2 — Hybrid Summary Panel with Divergence Engine
+ * 
+ * Shows: Synthetic, Replay, and full Divergence metrics from backend
+ */
+function HybridSummaryPanel({ forecast, primaryMatch, currentPrice, focus, divergence }) {
   if (!forecast || !currentPrice) return null;
   
   const syntheticReturn = forecast.pricePath?.length 
@@ -165,25 +169,41 @@ function HybridSummaryPanel({ forecast, primaryMatch, currentPrice, focus }) {
     ? ((primaryMatch.replayPath[primaryMatch.replayPath.length - 1] - currentPrice) / currentPrice * 100)
     : null;
   
-  // Divergence calculation
-  const divergence = replayReturn !== null 
-    ? Math.abs(syntheticReturn - replayReturn) 
-    : null;
+  // Use backend divergence metrics if available
+  const div = divergence || {};
+  const score = div.score ?? null;
+  const grade = div.grade ?? 'N/A';
+  const flags = div.flags ?? [];
   
-  const divergenceLevel = divergence !== null
-    ? divergence < 5 ? 'LOW' : divergence < 15 ? 'MODERATE' : 'HIGH'
-    : 'N/A';
+  // Grade colors
+  const gradeColors = {
+    'A': '#22c55e',
+    'B': '#84cc16',
+    'C': '#f59e0b',
+    'D': '#f97316',
+    'F': '#ef4444',
+    'N/A': '#888',
+  };
   
-  const divergenceColor = divergenceLevel === 'LOW' ? '#22c55e' 
-    : divergenceLevel === 'MODERATE' ? '#f59e0b' 
-    : divergenceLevel === 'HIGH' ? '#ef4444' 
-    : '#888';
+  const gradeColor = gradeColors[grade] || '#888';
+  
+  // Has warnings?
+  const hasWarnings = flags.length > 0 && !flags.includes('PERFECT_MATCH');
 
   return (
     <div style={styles.container}>
       <div style={styles.header}>
         <span style={styles.title}>HYBRID PROJECTION</span>
         <span style={styles.subtitle}>{focus.toUpperCase()} Horizon</span>
+        {/* Grade badge */}
+        {score !== null && (
+          <span style={{
+            ...styles.gradeBadge,
+            backgroundColor: gradeColor,
+          }}>
+            {grade} ({score})
+          </span>
+        )}
       </div>
       
       <div style={styles.grid}>
@@ -221,19 +241,81 @@ function HybridSummaryPanel({ forecast, primaryMatch, currentPrice, focus }) {
           )}
         </div>
         
-        {/* Divergence Column */}
+        {/* Divergence Column - Now from backend */}
         <div style={styles.column}>
           <div style={styles.columnHeader}>DIVERGENCE</div>
-          <div style={{ ...styles.value, color: divergenceColor }}>
-            {divergence !== null ? divergence.toFixed(1) + '%' : '—'}
+          <div style={{ ...styles.value, color: gradeColor }}>
+            {div.rmse != null ? `${div.rmse.toFixed(1)}%` : '—'}
           </div>
-          <div style={{ ...styles.label, color: divergenceColor }}>
-            {divergenceLevel}
+          <div style={{ ...styles.label, color: gradeColor }}>
+            RMSE
           </div>
         </div>
       </div>
+      
+      {/* BLOCK 73.2: Detailed Divergence Metrics */}
+      {divergence && (
+        <DivergenceDetails divergence={divergence} hasWarnings={hasWarnings} />
+      )}
     </div>
   );
+}
+
+/**
+ * Detailed divergence metrics panel
+ */
+function DivergenceDetails({ divergence, hasWarnings }) {
+  const { rmse, mape, corr, terminalDelta, directionalMismatch, flags, samplePoints } = divergence;
+  
+  return (
+    <div style={styles.detailsContainer}>
+      <div style={styles.detailsGrid}>
+        <MetricItem label="Correlation" value={corr?.toFixed(2)} warning={corr < 0.3} />
+        <MetricItem label="Terminal Δ" value={`${terminalDelta >= 0 ? '+' : ''}${terminalDelta?.toFixed(1)}%`} warning={Math.abs(terminalDelta) > 20} />
+        <MetricItem label="Dir Mismatch" value={`${directionalMismatch?.toFixed(0)}%`} warning={directionalMismatch > 55} />
+        <MetricItem label="Sample" value={samplePoints} />
+      </div>
+      
+      {/* Warning flags */}
+      {hasWarnings && flags.length > 0 && (
+        <div style={styles.flagsRow}>
+          {flags.filter(f => f !== 'PERFECT_MATCH').map((flag, i) => (
+            <span key={i} style={styles.flag}>
+              {formatFlag(flag)}
+            </span>
+          ))}
+        </div>
+      )}
+      
+      {/* Perfect match indicator */}
+      {flags.includes('PERFECT_MATCH') && (
+        <div style={styles.perfectMatch}>
+          ✓ PERFECT ALIGNMENT
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MetricItem({ label, value, warning }) {
+  return (
+    <div style={styles.metricItem}>
+      <span style={styles.metricLabel}>{label}</span>
+      <span style={{ ...styles.metricValue, color: warning ? '#f59e0b' : '#444' }}>
+        {value ?? '—'}
+      </span>
+    </div>
+  );
+}
+
+function formatFlag(flag) {
+  const labels = {
+    'HIGH_DIVERGENCE': 'High Divergence',
+    'LOW_CORR': 'Low Correlation',
+    'TERM_DRIFT': 'Terminal Drift',
+    'DIR_MISMATCH': 'Direction Mismatch',
+  };
+  return labels[flag] || flag;
 }
 
 const styles = {
@@ -261,6 +343,14 @@ const styles = {
   subtitle: {
     fontSize: 10,
     color: '#888',
+  },
+  gradeBadge: {
+    marginLeft: 'auto',
+    padding: '2px 8px',
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 700,
+    color: '#fff',
   },
   grid: {
     display: 'grid',
@@ -298,6 +388,62 @@ const styles = {
   noData: {
     fontSize: 12,
     color: '#aaa',
+    fontStyle: 'italic',
+  },
+  // BLOCK 73.2: Details styles
+  detailsContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTop: '1px solid #EAEAEA',
+  },
+  detailsGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(4, 1fr)',
+    gap: 8,
+  },
+  metricItem: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 2,
+  },
+  metricLabel: {
+    fontSize: 9,
+    color: '#888',
+    textTransform: 'uppercase',
+  },
+  metricValue: {
+    fontSize: 12,
+    fontWeight: 600,
+    fontFamily: 'monospace',
+  },
+  flagsRow: {
+    display: 'flex',
+    gap: 6,
+    marginTop: 10,
+    flexWrap: 'wrap',
+  },
+  flag: {
+    padding: '3px 8px',
+    backgroundColor: '#fef3c7',
+    border: '1px solid #f59e0b',
+    borderRadius: 4,
+    fontSize: 9,
+    fontWeight: 600,
+    color: '#b45309',
+  },
+  perfectMatch: {
+    marginTop: 10,
+    padding: '4px 12px',
+    backgroundColor: '#dcfce7',
+    border: '1px solid #22c55e',
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 600,
+    color: '#166534',
+    textAlign: 'center',
+  },
+};
     fontStyle: 'italic',
   },
 };
