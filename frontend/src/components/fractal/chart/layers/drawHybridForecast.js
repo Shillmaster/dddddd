@@ -168,9 +168,10 @@ export function drawHybridForecast(
   ctx.fill();
   ctx.restore();
   
-  // Replay end marker
-  if (replayPath.length > 0) {
-    const lastReplayY = y(replayPath[Math.min(replayPath.length, N) - 1]);
+  // Replay end marker (BLOCK 73.3: use replayData)
+  if (replayData.length > 0) {
+    const lastReplay = replayData[replayData.length - 1];
+    const lastReplayY = y(lastReplay.price);
     ctx.save();
     ctx.fillStyle = '#8b5cf6';
     ctx.beginPath();
