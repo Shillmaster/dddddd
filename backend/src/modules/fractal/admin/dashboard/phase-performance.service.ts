@@ -117,6 +117,7 @@ export interface PhasePerformanceResponse {
     from: string;
     to: string;
     resolvedCount: number;
+    minSamplesForTrust?: number;  // Tier-aware threshold
   };
   global: GlobalStats;
   phases: PhaseStats[];
