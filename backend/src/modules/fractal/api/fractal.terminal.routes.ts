@@ -761,6 +761,16 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
             conflictMultiplier: sizingResult.conflictMultiplier,
             riskMultiplier: sizingResult.riskMultiplier,
             volatilityMultiplier: volatilityResult.policy.sizeMultiplier,
+            // BLOCK 73.8: Phase grade integration
+            phaseGrade: phaseGradeResult?.grade || null,
+            phaseSampleQuality: phaseGradeResult?.sampleQuality || null,
+            phaseScore: phaseGradeResult?.score || null,
+            confidenceAdjustment: {
+              basePp: avgConfidence,
+              adjustmentPp: adjustmentPp,
+              finalPp: adjustedConfidence,
+              reason: confAdjustReason,
+            },
             finalSize: finalSizeAfterVol,
             finalPercent: Math.round(finalSizeAfterVol * 1000) / 10,
             sizeLabel: sizeToLabel(finalSizeAfterVol),
@@ -803,8 +813,20 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
                 note: `${volatilityResult.regime} regime clamp`,
                 severity: volatilityResult.policy.sizeMultiplier >= 0.7 ? 'OK' : volatilityResult.policy.sizeMultiplier >= 0.4 ? 'WARN' : 'CRITICAL',
               },
+              // BLOCK 73.8: Phase Grade factor in breakdown
+              ...(phaseGradeResult ? [{
+                factor: 'PHASE',
+                order: 6,
+                multiplier: phaseGradeResult.grade === 'A' ? 1.15 : 
+                           phaseGradeResult.grade === 'B' ? 1.05 :
+                           phaseGradeResult.grade === 'C' ? 1.00 :
+                           phaseGradeResult.grade === 'D' ? 0.80 : 0.60,
+                note: `Phase ${globalPhase} Grade ${phaseGradeResult.grade} (score ${phaseGradeResult.score.toFixed(0)})`,
+                severity: phaseGradeResult.grade === 'A' || phaseGradeResult.grade === 'B' ? 'OK' : 
+                         phaseGradeResult.grade === 'C' ? 'WARN' : 'CRITICAL',
+              }] : []),
             ],
-            formula: `${sizingResult.baseSize.toFixed(2)} × ${sizingResult.consensusMultiplier.toFixed(2)} × ${sizingResult.conflictMultiplier.toFixed(2)} × ${sizingResult.riskMultiplier.toFixed(2)} × ${volatilityResult.policy.sizeMultiplier.toFixed(2)}`,
+            formula: `${sizingResult.baseSize.toFixed(2)} × ${sizingResult.consensusMultiplier.toFixed(2)} × ${sizingResult.conflictMultiplier.toFixed(2)} × ${sizingResult.riskMultiplier.toFixed(2)} × ${volatilityResult.policy.sizeMultiplier.toFixed(2)}${phaseGradeResult ? ` × Phase(${phaseGradeResult.grade})` : ''}`,
           },
         },
         // P1.4: Volatility Regime
