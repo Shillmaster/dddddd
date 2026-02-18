@@ -216,29 +216,51 @@ function detectPhaseSimple(closes: number[]): PhaseType {
   const ma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
   const ma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / 50;
   
-  // Simple phase detection based on MA relationships
+  // Calculate momentum (20-day ROC)
+  const roc20 = closes.length > 20 
+    ? (last - closes[closes.length - 21]) / closes[closes.length - 21]
+    : 0;
+  
+  // Calculate volatility (recent 20 day std)
+  const returns20: number[] = [];
+  for (let i = closes.length - 20; i < closes.length; i++) {
+    if (i > 0) returns20.push((closes[i] - closes[i-1]) / closes[i-1]);
+  }
+  const vol = returns20.length > 1 
+    ? Math.sqrt(returns20.map(r => r*r).reduce((a,b)=>a+b,0) / returns20.length)
+    : 0;
+  
+  // Simple phase detection based on MA relationships and momentum
   const aboveMa20 = last > ma20;
   const aboveMa50 = last > ma50;
   const ma20AboveMa50 = ma20 > ma50;
   
-  // Calculate momentum (20-day ROC)
-  const roc20 = (last - closes[closes.length - 21]) / closes[closes.length - 21];
-  
-  if (aboveMa20 && aboveMa50 && ma20AboveMa50 && roc20 > 0.05) {
+  // Strong uptrend
+  if (aboveMa20 && aboveMa50 && ma20AboveMa50 && roc20 > 0.03) {
     return 'MARKUP';
   }
-  if (!aboveMa20 && !aboveMa50 && !ma20AboveMa50 && roc20 < -0.05) {
+  
+  // Strong downtrend  
+  if (!aboveMa20 && !aboveMa50 && !ma20AboveMa50 && roc20 < -0.03) {
     return 'MARKDOWN';
   }
-  if (aboveMa50 && !ma20AboveMa50 && roc20 < 0) {
-    return 'DISTRIBUTION';
-  }
-  if (!aboveMa50 && ma20AboveMa50 && roc20 > 0) {
-    return 'RECOVERY';
-  }
-  if (!aboveMa20 && roc20 < -0.10) {
+  
+  // High vol capitulation
+  if (!aboveMa50 && roc20 < -0.08 && vol > 0.03) {
     return 'CAPITULATION';
   }
+  
+  // Distribution (topping)
+  if (aboveMa50 && roc20 < -0.01 && roc20 > -0.05) {
+    return 'DISTRIBUTION';
+  }
+  
+  // Recovery (bottoming)
+  if (!aboveMa50 && roc20 > 0.01 && roc20 < 0.05) {
+    return 'RECOVERY';
+  }
+  
+  // Default to accumulation
   return 'ACCUMULATION';
 }
 
