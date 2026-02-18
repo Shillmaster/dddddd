@@ -70,11 +70,11 @@ class FractalAPITester:
 
     def test_python_gateway_health(self):
         """Test Python gateway health endpoint"""
-        success, details = self.make_request("GET", "/health")
+        success, details = self.make_request("GET", "/api/health")
         
         if success:
             data = details.get("response_data", {})
-            expected_fields = ["service", "mode", "status", "node_backend"]
+            expected_fields = ["ok", "mode", "timestamp"]
             missing_fields = [field for field in expected_fields if field not in data]
             
             if missing_fields:
@@ -83,9 +83,9 @@ class FractalAPITester:
             elif data.get("mode") != "FRACTAL_ONLY":
                 success = False
                 details["error"] = f"Expected mode 'FRACTAL_ONLY', got '{data.get('mode')}'"
-            elif data.get("status") != "ok":
+            elif not data.get("ok"):
                 success = False
-                details["error"] = f"Expected status 'ok', got '{data.get('status')}'"
+                details["error"] = f"Expected ok: true, got '{data.get('ok')}'"
         
         self.log_test("Python Gateway Health Check", success, details)
         return success
