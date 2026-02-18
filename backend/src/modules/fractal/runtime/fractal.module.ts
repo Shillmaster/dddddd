@@ -128,6 +128,9 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   // Register Admin Overview routes (BLOCK 49.x)
   await fastify.register(adminOverviewRoutes);
 
+  // Register Phase Performance routes (BLOCK 73.6)
+  await fastify.register(phasePerformanceRoutes);
+
   // Register Snapshot Writer routes (BLOCK 56.2 - Lifecycle)
   await fastify.register(snapshotWriterRoutes);
 
