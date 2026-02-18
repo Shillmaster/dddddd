@@ -668,6 +668,72 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
       const finalSizeAfterVol = volatilityApplied.sizeAfter;
       const finalConfAfterVol = volatilityApplied.confAfter;
 
+      // ═══════════════════════════════════════════════════════════════
+      // BLOCK 74.1 + 74.2: Build Horizon Stack + Institutional Consensus
+      // ═══════════════════════════════════════════════════════════════
+      
+      // Map volatility regime to VolRegime type
+      const volRegime: VolRegime = volatilityResult.regime as VolRegime;
+      
+      // Get phase grades for each tier
+      const phaseGrades: Record<string, { grade: Grade; score: number; sampleQuality: SampleQuality }> = {};
+      for (const tierName of ['timing', 'tactical', 'structure']) {
+        const tierEnum = tierName.toUpperCase() as 'TIMING' | 'TACTICAL' | 'STRUCTURE';
+        try {
+          const phaseResult = await phasePerformanceService.aggregate({
+            symbol,
+            tier: tierEnum,
+          });
+          // Find current phase in results
+          const currentPhaseData = phaseResult.phases.find(
+            p => p.phaseType.toUpperCase() === globalPhase.toUpperCase()
+          );
+          if (currentPhaseData) {
+            phaseGrades[tierName] = {
+              grade: currentPhaseData.grade,
+              score: currentPhaseData.score,
+              sampleQuality: currentPhaseData.sampleQuality,
+            };
+          } else {
+            phaseGrades[tierName] = { grade: 'C' as Grade, score: 50, sampleQuality: 'OK' as SampleQuality };
+          }
+        } catch {
+          phaseGrades[tierName] = { grade: 'C' as Grade, score: 50, sampleQuality: 'OK' as SampleQuality };
+        }
+      }
+      
+      // Prepare horizon data for adaptive weighting
+      const horizonDataForStack = horizonMatrix.map(h => ({
+        horizon: h.horizon,
+        direction: h.direction,
+        confidence: h.confidence,
+        entropy: h.entropy,
+        tailRisk: h.tailRisk,
+        reliability: h.reliability,
+        blockers: h.blockers,
+        matchCount: overlayResult?.matches?.length || 0,
+        primaryMatch: overlayResult?.matches?.[0] ? {
+          id: overlayResult.matches[0].id || overlayResult.matches[0].date || 'unknown',
+          score: overlayResult.matches[0].similarity || 0,
+          return: overlayResult.matches[0].forwardReturn || 0,
+        } : null,
+      }));
+      
+      // Build horizon stack with adaptive weights
+      const horizonStack = adaptiveWeightingService.buildHorizonStack(
+        horizonDataForStack,
+        volRegime,
+        phaseGrades
+      );
+      
+      // Update phase type in stack
+      horizonStack.forEach(item => {
+        item.phase.type = globalPhase;
+      });
+      
+      // Compute institutional consensus
+      const consensus74 = adaptiveWeightingService.computeConsensus(horizonStack, volRegime);
+
       const payload: TerminalPayload = {
         meta: {
           symbol,
