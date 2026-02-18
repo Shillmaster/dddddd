@@ -50,6 +50,9 @@ export interface AdaptiveSizingInput {
   tierWeights: TierWeights;
   volatility: VolatilityResult;
   thresholdBlockers: string[];
+  // BLOCK 73.7: Phase performance grade
+  phaseGrade?: 'A' | 'B' | 'C' | 'D' | 'F';
+  phaseSampleQuality?: 'OK' | 'LOW_SAMPLE' | 'VERY_LOW_SAMPLE';
 }
 
 // ═══════════════════════════════════════════════════════════════
