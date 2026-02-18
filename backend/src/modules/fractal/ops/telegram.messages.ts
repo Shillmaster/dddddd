@@ -86,6 +86,7 @@ export function buildDailyReport(s: DailyRunSummary): string {
     `RESOLVE: ${badgeOk(st.resolve?.success)} (${st.resolve?.resolved || 0})`,
     `REBUILD: ${badgeOk(st.rebuild?.success)} | AUDIT: ${badgeOk(st.audit?.success)}`,
     alertsLine,
+    memoryLine,
     ``,
     `<b>Forward Truth</b>`,
     forward,
