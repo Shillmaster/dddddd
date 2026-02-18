@@ -202,6 +202,38 @@ export interface DivergenceMetrics {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// BLOCK 73.3 — UNIFIED PATH
+// ═══════════════════════════════════════════════════════════════
+
+export interface UnifiedPathPoint {
+  t: number;      // Day index (0 = NOW)
+  price: number;  // Absolute price
+  pct: number;    // % from NOW
+}
+
+export interface UnifiedPathMarker {
+  horizon: string;
+  t: number;
+  price: number;
+  pct: number;
+}
+
+export interface UnifiedPathData {
+  anchorPrice: number;
+  horizonDays: number;
+  syntheticPath: UnifiedPathPoint[];
+  replayPath: UnifiedPathPoint[] | null;
+  markers: {
+    d7?: UnifiedPathMarker;
+    d14?: UnifiedPathMarker;
+    d30?: UnifiedPathMarker;
+    d90?: UnifiedPathMarker;
+    d180?: UnifiedPathMarker;
+    d365?: UnifiedPathMarker;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN FOCUS PACK
 // ═══════════════════════════════════════════════════════════════
 
@@ -219,6 +251,9 @@ export interface FocusPack {
   
   // BLOCK 73.2: Divergence Engine
   divergence?: DivergenceMetrics;
+  
+  // BLOCK 73.3: Unified Path (single source of truth)
+  unifiedPath?: UnifiedPathData;
 }
 
 // ═══════════════════════════════════════════════════════════════
