@@ -1,125 +1,67 @@
-# Fractal Research Terminal — PRD
+# Fractal Terminal PRD — BLOCK 70.2 STEP 2
 
 ## Original Problem Statement
-Production-grade Fractal module setup with Telegram alerts, Module Isolation, and Contract Lock v2.1.1
+Клонировать репозиторий https://github.com/Shillmaster/ttrtrt66, поднять фронт, бэкенд, админку. Работать только с областью Fractal. Завершить STEP 2 — Real Horizon Binding для фронтенда.
 
 ## Architecture
-```
-/app
-├── backend (FastAPI proxy → Fastify TypeScript)
-│   ├── server.py              # Python proxy (port 8001)
-│   └── src/
-│       ├── app.fractal.ts     # Isolated Fractal entrypoint (port 8002)
-│       ├── modules/fractal/   # Fractal business logic
-│       │   ├── MODULE_BOUNDARY.md  # Isolation spec
-│       │   ├── alerts/        # BLOCK 67-68: Alert System
-│       │   └── isolation/     # BLOCK B: HostDeps, Guards
-│       └── scripts/fractal_import_guard.ts
-└── frontend (React + Craco)
-    └── src/pages/FractalAdminPage.js
-```
+- **Backend**: TypeScript/Fastify (запускается через Python proxy на port 8001)
+- **Frontend**: React/CRA (port 3000)
+- **Database**: MongoDB (local)
+- **Key Module**: `/app/backend/src/modules/fractal/`
+
+## User Personas
+- Institutional Traders (target: hedge funds, prop trading)
+- Quantitative Analysts
+- System Administrators (via Admin Panel)
+
+## Core Requirements (Static)
+1. Multi-horizon fractal analysis (7D/14D/30D/90D/180D/365D)
+2. Real-time horizon switching with full redraw
+3. Distribution-based forecasting
+4. Pattern matching engine
+5. Admin dashboard for monitoring
 
 ## What's Been Implemented
+### Date: 2026-02-18
 
-### 2026-02-18 — Full Stack Deployment
-- ✅ Cloned GitHub repository ccccw44
-- ✅ MongoDB running: `fractal_dev` database
-- ✅ TypeScript backend (Fastify on port 8002)
-- ✅ Frontend (React + Craco)
+**STEP 2 — Real Horizon Binding (COMPLETE)**
 
-### 2026-02-18 — BLOCK 67-68: Alert System
-- ✅ Alert Engine Core (BTC-only)
-- ✅ Rate limiting: 3 INFO/HIGH per 24h
-- ✅ Dedup + Cooldown (6h INFO/HIGH, 1h CRITICAL)
-- ✅ MongoDB logging (fractal_alerts_log)
-- ✅ Telegram adapter with FRACTAL_ALERTS_ENABLED guard
-- ✅ Admin UI: Alerts tab
+1. ✅ **HorizonSelector UI** - All 6 horizons with tier color coding (TIMING/TACTICAL/STRUCTURE)
+2. ✅ **useFocusPack Hook** - AbortController, caching, proper data flow
+3. ✅ **FractalMainChart** - Updated to use focusPack instead of hardcoded API calls
+4. ✅ **drawForecast.js** - Dynamic markers based on current focus (not hardcoded 7d/14d/30d)
+5. ✅ **Backend focus-pack API** - Returns correct distributionSeries length for each horizon
+6. ✅ **FocusInfoPanel** - Shows current focus, window, aftermath, matches, quality
+7. ✅ **Admin Dashboard** - Working at /admin/fractal
 
-### 2026-02-18 — Telegram Activation (Шаг 1)
-- ✅ Added env: TG_BOT_TOKEN, TG_ADMIN_CHAT_ID, FRACTAL_ALERTS_ENABLED
-- ✅ Alert adapter checks FRACTAL_ALERTS_ENABLED=true before sending
-- ✅ Logs to MongoDB regardless of send status
-- ✅ Guard: `if (blockedBy !== 'NONE') return`
-
-### 2026-02-18 — Daily Cron Order (Шаг 2)
-- ✅ Order: WRITE → RESOLVE → REBUILD → ALERTS_RUN → AUDIT
-- ✅ Daily report includes: `Alerts: sent X | blocked Y | quota Z/3`
-
-### 2026-02-18 — Contract Lock v2.1.1 (Шаг 3)
-- ✅ Version bumped: v2.1.0 → v2.1.1
-- ✅ Frozen alert policy table in contract schema
-- ✅ Frozen: quota, cooldown, severity mapping
-
-### 2026-02-18 — BLOCK B: Module Isolation
-- ✅ MODULE_BOUNDARY.md created
-- ✅ fractal_import_guard.ts script (247 files scanned, PASS)
-- ✅ HostDeps contract in place
-- ✅ Forbidden imports registry
-
-## API Endpoints
-
-### Alert System
-- `GET /api/fractal/v2.1/admin/alerts` — List alerts
-- `GET /api/fractal/v2.1/admin/alerts/quota` — Quota status (0/3)
-- `GET /api/fractal/v2.1/admin/alerts/stats` — Statistics
-- `POST /api/fractal/v2.1/admin/alerts/check` — Dry run
-- `POST /api/fractal/v2.1/admin/alerts/run` — Production run
-- `POST /api/fractal/v2.1/admin/alerts/test` — Test alert
-
-## Configuration
-
-### Backend .env
-```
-MONGO_URL="mongodb://localhost:27017"
-DB_NAME="test_database"
-TG_BOT_TOKEN=          # Required for Telegram alerts
-TG_ADMIN_CHAT_ID=      # Required for Telegram alerts
-FRACTAL_ALERTS_ENABLED=false  # Set true for production
-PUBLIC_ADMIN_URL=https://tradeanalyzer-8.preview.emergentagent.com
-```
-
-## Contract v2.1.1 Frozen Parameters
-- Alert types: REGIME_SHIFT, CRISIS_ENTER, CRISIS_EXIT, HEALTH_DROP, TAIL_SPIKE
-- Alert levels: INFO, HIGH, CRITICAL
-- Quota: 3 per 24h (INFO/HIGH), CRITICAL unlimited
-- Cooldown: 6h (INFO/HIGH), 1h (CRITICAL)
-
-## Access URLs
-- **Main:** https://tradeanalyzer-8.preview.emergentagent.com
-- **Admin:** /admin/fractal
-- **Alerts:** /admin/fractal?tab=alerts
-
-### 2026-02-18 — BLOCK 70.2: Real Horizon Binding (STEP 1)
-- ✅ New endpoint: `/api/fractal/v2.1/focus-pack`
-- ✅ Each horizon returns DIFFERENT data:
-  - 7d → 7 points, 15 matches
-  - 14d → 14 points, 12 matches
-  - 30d → 30 points, 10 matches
-  - 90d → 90 points, 8 matches
-  - 180d → 120 points, 6 matches
-  - 365d → 180 points, 5 matches
-- ✅ Distribution series length = aftermathDays
-- ✅ Validation endpoint: `/api/fractal/v2.1/focus-pack/validate`
-- Files: `focus.types.ts`, `focus-pack.builder.ts`, `focus.routes.ts`
+**API Validation Results:**
+- 7D: distLen=7, matches=15
+- 14D: distLen=14, matches=12  
+- 30D: distLen=30, matches=10
+- 90D: distLen=90, matches=8
+- 180D: distLen=180, matches=6
+- 365D: distLen=365, matches=5
 
 ## Prioritized Backlog
 
-### P0 (Done)
-- [x] Telegram Activation
-- [x] Daily Cron Order (ALERTS_RUN)
-- [x] Contract Lock v2.1.1
-- [x] BLOCK B: Module Isolation
-- [x] BLOCK 70.2 STEP 1: FocusPack Backend
+### P0 (Next)
+- [ ] STEP 3 — Interactive Phase Shading (клик по фазе → открывается конкретный исторический фрактал с outcome)
 
-### P1 (Next)
-- [ ] BLOCK 70.2 STEP 2: Frontend wiring (HorizonSelector → refetch)
-- [ ] BLOCK 71: Interactive Fractal Explorer
-- [ ] BLOCK 72: Multi-Layer Market Map
+### P1
+- [ ] Fix StrategyPanel API endpoint
+- [ ] ForwardPerformancePanel integration
+- [ ] Matches modal/drawer for detailed analysis
 
-### P2 (Future)
-- [ ] BLOCK C: MetaBrain Integration Contract
-- [ ] BLOCK D: Full Documentation Pack
-- [ ] BLOCK F: Production Packaging (Docker)
+### P2
+- [ ] Fractal Overlay mode improvements
+- [ ] Export functionality
+- [ ] Real-time data updates
 
-## Last Updated
-2026-02-18 — BLOCK 70.2 STEP 1 Complete (Real Horizon Binding)
+## Technical Notes
+- Backend runs as proxy: Python FastAPI (8001) → TypeScript Fastify (8002)
+- Frontend .env: REACT_APP_BACKEND_URL must match preview domain
+- Focus-pack API: `/api/fractal/v2.1/focus-pack?symbol=BTC&focus=30d`
+
+## Files Modified (STEP 2)
+- `/app/frontend/src/components/fractal/chart/FractalMainChart.jsx`
+- `/app/frontend/src/components/fractal/chart/layers/drawForecast.js`
