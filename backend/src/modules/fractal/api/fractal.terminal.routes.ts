@@ -219,6 +219,7 @@ const canonicalStore = new CanonicalStore();
 const engine = new FractalEngine();
 const resolver = new HierarchicalResolverService();
 const volatilityService = getVolatilityRegimeService();
+const adaptiveWeightingService = getAdaptiveWeightingService();
 
 const SHORT_HORIZONS: HorizonKey[] = ['7d', '14d', '30d'];
 const EXTENDED_HORIZONS: HorizonKey[] = ['7d', '14d', '30d', '90d', '180d', '365d'];
