@@ -4000,6 +4000,7 @@ class FractalAPITester:
             "basic_success": basic_success,
             "phase2_success": phase2_success,
             "institutional_success": institutional_success,
+            "block74_success": block74_success,
             "core_success": core_success,
             "alert_success": alert_success,
             "all_results": self.test_results
