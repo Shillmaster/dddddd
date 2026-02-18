@@ -16,6 +16,8 @@ import { StrategyPanel } from '../components/fractal/sections/StrategyPanel';
 import ForwardPerformancePanel from '../components/fractal/ForwardPerformancePanel';
 import { VolatilityCard } from '../components/fractal/VolatilityCard';
 import { SizingBreakdown } from '../components/fractal/SizingBreakdown';
+import { HorizonStackView } from '../components/fractal/HorizonStackView';
+import { ConsensusPanel } from '../components/fractal/ConsensusPanel';
 import { HorizonSelector, HorizonPills } from '../components/fractal/HorizonSelector';
 import { FocusInfoPanel, FocusStatsBadge } from '../components/fractal/FocusInfoPanel';
 import { PhaseHeatmap } from '../components/fractal/PhaseHeatmap';
