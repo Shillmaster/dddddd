@@ -31,11 +31,32 @@ const TIER_HORIZONS: Record<Tier, number[]> = {
   STRUCTURE: [180, 365]
 };
 
-// Sample quality thresholds
-const SAMPLE_THRESHOLDS = {
-  OK: 12,
-  LOW: 6,
-  VERY_LOW: 3
+// ═══════════════════════════════════════════════════════════════
+// TIER-AWARE SAMPLE THRESHOLDS (Institutional)
+// ═══════════════════════════════════════════════════════════════
+
+const TIER_SAMPLE_THRESHOLDS: Record<Tier, { OK: number; LOW: number; VERY_LOW: number }> = {
+  TIMING: { OK: 20, LOW: 10, VERY_LOW: 5 },      // High frequency, need more samples
+  TACTICAL: { OK: 12, LOW: 6, VERY_LOW: 3 },     // Standard
+  STRUCTURE: { OK: 18, LOW: 10, VERY_LOW: 5 }    // Long horizon, need stability
+};
+
+// Return scale by tier (for expectancy normalization)
+const TIER_RET_SCALE: Record<Tier, number> = {
+  TIMING: 0.03,     // 3% is good for 7-14d
+  TACTICAL: 0.06,   // 6% is good for 30-90d
+  STRUCTURE: 0.12   // 12% is good for 180-365d
+};
+
+// Sharpe normalization bounds
+const SHARPE_MIN = -0.5;
+const SHARPE_MAX = 2.0;
+
+// Tail risk thresholds by tier
+const TIER_TAIL_THRESHOLD: Record<Tier, number> = {
+  TIMING: -0.07,    // -7% P10 is painful for short term
+  TACTICAL: -0.10,  // -10% P10
+  STRUCTURE: -0.15  // -15% P10 for structure
 };
 
 export interface PhasePerformanceQuery {
