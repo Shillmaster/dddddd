@@ -1161,6 +1161,273 @@ class FractalAPITester:
         return success
 
     # ═══════════════════════════════════════════════════════════════
+    # BLOCK 70.2: HORIZON BINDING TESTS (FOCUS-PACK API)
+    # ═══════════════════════════════════════════════════════════════
+
+    def test_focus_pack_7d_horizon(self):
+        """Test /api/fractal/v2.1/focus-pack for 7D horizon - TIMING tier"""
+        params = {"symbol": "BTC", "focus": "7d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            elif "focusPack" not in data:
+                success = False
+                details["error"] = "Expected 'focusPack' field"
+            else:
+                focus_pack = data["focusPack"]
+                
+                # Validate meta for 7D
+                meta = focus_pack.get("meta", {})
+                if meta.get("focus") != "7d":
+                    success = False
+                    details["error"] = f"Expected focus '7d', got '{meta.get('focus')}'"
+                elif meta.get("aftermathDays") != 7:
+                    success = False
+                    details["error"] = f"Expected aftermathDays 7, got {meta.get('aftermathDays')}"
+                elif meta.get("tier") != "TIMING":
+                    success = False
+                    details["error"] = f"Expected tier 'TIMING', got '{meta.get('tier')}'"
+                
+                # Validate distribution series length = 7
+                if success:
+                    overlay = focus_pack.get("overlay", {})
+                    dist_series = overlay.get("distributionSeries", {})
+                    p50_length = len(dist_series.get("p50", []))
+                    if p50_length != 7:
+                        success = False
+                        details["error"] = f"Expected distributionSeries.p50 length 7, got {p50_length}"
+                    
+                    # Check matches count (should be ~15)
+                    matches_count = len(overlay.get("matches", []))
+                    details["matches_count"] = matches_count
+                    if matches_count < 10 or matches_count > 20:
+                        details["warning"] = f"Expected ~15 matches, got {matches_count}"
+        
+        self.log_test("Focus Pack 7D Horizon (BLOCK 70.2)", success, details)
+        return success
+
+    def test_focus_pack_30d_horizon(self):
+        """Test /api/fractal/v2.1/focus-pack for 30D horizon - TACTICAL tier"""
+        params = {"symbol": "BTC", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            elif "focusPack" not in data:
+                success = False
+                details["error"] = "Expected 'focusPack' field"
+            else:
+                focus_pack = data["focusPack"]
+                
+                # Validate meta for 30D
+                meta = focus_pack.get("meta", {})
+                if meta.get("focus") != "30d":
+                    success = False
+                    details["error"] = f"Expected focus '30d', got '{meta.get('focus')}'"
+                elif meta.get("aftermathDays") != 30:
+                    success = False
+                    details["error"] = f"Expected aftermathDays 30, got {meta.get('aftermathDays')}"
+                elif meta.get("tier") != "TACTICAL":
+                    success = False
+                    details["error"] = f"Expected tier 'TACTICAL', got '{meta.get('tier')}'"
+                
+                # Validate distribution series length = 30
+                if success:
+                    overlay = focus_pack.get("overlay", {})
+                    dist_series = overlay.get("distributionSeries", {})
+                    p50_length = len(dist_series.get("p50", []))
+                    if p50_length != 30:
+                        success = False
+                        details["error"] = f"Expected distributionSeries.p50 length 30, got {p50_length}"
+                    
+                    # Check matches count (should be ~10)
+                    matches_count = len(overlay.get("matches", []))
+                    details["matches_count"] = matches_count
+                    if matches_count < 8 or matches_count > 15:
+                        details["warning"] = f"Expected ~10 matches, got {matches_count}"
+                
+                # Validate forecast markers for 30D (should include 7d, 14d, 30d markers)
+                if success:
+                    forecast = focus_pack.get("forecast", {})
+                    markers = forecast.get("markers", [])
+                    marker_horizons = [m.get("horizon") for m in markers]
+                    expected_horizons = ["7d", "14d", "30d"]
+                    missing_horizons = [h for h in expected_horizons if h not in marker_horizons]
+                    if missing_horizons:
+                        success = False
+                        details["error"] = f"Missing forecast markers: {missing_horizons}"
+        
+        self.log_test("Focus Pack 30D Horizon (BLOCK 70.2)", success, details)
+        return success
+
+    def test_focus_pack_365d_horizon(self):
+        """Test /api/fractal/v2.1/focus-pack for 365D horizon - STRUCTURE tier"""
+        params = {"symbol": "BTC", "focus": "365d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params, timeout=90)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            elif "focusPack" not in data:
+                success = False
+                details["error"] = "Expected 'focusPack' field"
+            else:
+                focus_pack = data["focusPack"]
+                
+                # Validate meta for 365D
+                meta = focus_pack.get("meta", {})
+                if meta.get("focus") != "365d":
+                    success = False
+                    details["error"] = f"Expected focus '365d', got '{meta.get('focus')}'"
+                elif meta.get("aftermathDays") != 365:
+                    success = False
+                    details["error"] = f"Expected aftermathDays 365, got {meta.get('aftermathDays')}"
+                elif meta.get("tier") != "STRUCTURE":
+                    success = False
+                    details["error"] = f"Expected tier 'STRUCTURE', got '{meta.get('tier')}'"
+                
+                # Validate distribution series length = 365
+                if success:
+                    overlay = focus_pack.get("overlay", {})
+                    dist_series = overlay.get("distributionSeries", {})
+                    p50_length = len(dist_series.get("p50", []))
+                    if p50_length != 365:
+                        success = False
+                        details["error"] = f"Expected distributionSeries.p50 length 365, got {p50_length}"
+                    
+                    # Check matches count (should be ~5)
+                    matches_count = len(overlay.get("matches", []))
+                    details["matches_count"] = matches_count
+                    if matches_count < 3 or matches_count > 8:
+                        details["warning"] = f"Expected ~5 matches, got {matches_count}"
+                
+                # Validate forecast markers for 365D (should include all major horizons)
+                if success:
+                    forecast = focus_pack.get("forecast", {})
+                    markers = forecast.get("markers", [])
+                    marker_horizons = [m.get("horizon") for m in markers]
+                    expected_horizons = ["7d", "14d", "30d", "90d", "180d", "365d"]
+                    missing_horizons = [h for h in expected_horizons if h not in marker_horizons]
+                    if missing_horizons:
+                        success = False
+                        details["error"] = f"Missing forecast markers: {missing_horizons}"
+        
+        self.log_test("Focus Pack 365D Horizon (BLOCK 70.2)", success, details)
+        return success
+
+    def test_all_horizons_binding(self):
+        """Test all 6 horizons to ensure proper binding and different aftermath lengths"""
+        horizons = ["7d", "14d", "30d", "90d", "180d", "365d"]
+        expected_days = [7, 14, 30, 90, 180, 365]
+        expected_tiers = ["TIMING", "TIMING", "TACTICAL", "TACTICAL", "STRUCTURE", "STRUCTURE"]
+        
+        results = {}
+        success = True
+        
+        for i, horizon in enumerate(horizons):
+            params = {"symbol": "BTC", "focus": horizon}
+            horizon_success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params, timeout=60)
+            
+            if horizon_success:
+                data = details.get("response_data", {})
+                if data.get("ok") and "focusPack" in data:
+                    focus_pack = data["focusPack"]
+                    meta = focus_pack.get("meta", {})
+                    overlay = focus_pack.get("overlay", {})
+                    
+                    actual_days = meta.get("aftermathDays")
+                    actual_tier = meta.get("tier")
+                    dist_length = len(overlay.get("distributionSeries", {}).get("p50", []))
+                    matches_count = len(overlay.get("matches", []))
+                    
+                    results[horizon] = {
+                        "aftermathDays": actual_days,
+                        "tier": actual_tier,
+                        "distributionLength": dist_length,
+                        "matchesCount": matches_count,
+                        "expected_days": expected_days[i],
+                        "expected_tier": expected_tiers[i]
+                    }
+                    
+                    # Validate expectations
+                    if actual_days != expected_days[i]:
+                        success = False
+                        break
+                    if actual_tier != expected_tiers[i]:
+                        success = False
+                        break
+                    if dist_length != expected_days[i]:
+                        success = False
+                        break
+                else:
+                    success = False
+                    break
+            else:
+                success = False
+                break
+        
+        test_details = {"results": results}
+        if not success:
+            test_details["error"] = f"Horizon binding validation failed for {horizon}"
+        
+        self.log_test("All Horizons Real Binding (BLOCK 70.2)", success, test_details)
+        return success
+
+    def test_chart_data_consistency(self):
+        """Test /api/fractal/v2.1/chart endpoint for FractalMainChart"""
+        params = {"symbol": "BTC", "limit": 365}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/chart", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if "candles" not in data:
+                success = False
+                details["error"] = "Expected 'candles' field"
+            elif "sma200" not in data:
+                success = False
+                details["error"] = "Expected 'sma200' field"
+            elif "phases" not in data:
+                success = False
+                details["error"] = "Expected 'phases' field"
+            else:
+                candles = data.get("candles", [])
+                sma200 = data.get("sma200", [])
+                phases = data.get("phases", [])
+                
+                if len(candles) == 0:
+                    success = False
+                    details["error"] = "Expected non-empty candles array"
+                elif len(candles) != len(sma200):
+                    success = False
+                    details["error"] = f"Candles count ({len(candles)}) != SMA200 count ({len(sma200)})"
+                else:
+                    # Validate candle structure
+                    first_candle = candles[0]
+                    candle_fields = ["t", "o", "h", "l", "c", "v"]
+                    missing_fields = [field for field in candle_fields if field not in first_candle]
+                    if missing_fields:
+                        success = False
+                        details["error"] = f"Missing candle fields: {missing_fields}"
+                    else:
+                        details["chart_data"] = {
+                            "candles_count": len(candles),
+                            "sma200_count": len(sma200),
+                            "phases_count": len(phases)
+                        }
+        
+        self.log_test("Chart Data for FractalMainChart (BLOCK 70.2)", success, details)
+        return success
+
+    # ═══════════════════════════════════════════════════════════════
     # BLOCK 67-68: ALERT ENGINE TESTS
     # ═══════════════════════════════════════════════════════════════
 
