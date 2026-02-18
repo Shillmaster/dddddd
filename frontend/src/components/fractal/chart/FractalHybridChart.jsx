@@ -4,12 +4,14 @@ import { FractalChartCanvas } from "./FractalChartCanvas";
 /**
  * STEP A — Hybrid Projection Chart (MVP)
  * BLOCK 73.4 — Interactive Match Replay
+ * BLOCK 73.5.2 — Phase Click Drilldown
  * 
  * Shows both projections on same chart:
  * - Synthetic (green) - model forecast
  * - Replay (purple) - selected historical match aftermath
  * 
  * User can click on match chips to switch replay line
+ * User can click on phase zones to filter matches by phase type
  */
 
 export function FractalHybridChart({ 
@@ -17,7 +19,9 @@ export function FractalHybridChart({
   width = 1100, 
   height = 420,
   focus = '30d',
-  focusPack = null
+  focusPack = null,
+  // BLOCK 73.5.2: Callback to refetch focusPack with phaseId
+  onPhaseFilter
 }) {
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,6 +30,10 @@ export function FractalHybridChart({
   const [selectedMatchId, setSelectedMatchId] = useState(null);
   const [customReplayPack, setCustomReplayPack] = useState(null);
   const [replayLoading, setReplayLoading] = useState(false);
+  
+  // BLOCK 73.5.2: Selected phase state
+  const [selectedPhaseId, setSelectedPhaseId] = useState(null);
+  const [selectedPhaseStats, setSelectedPhaseStats] = useState(null);
 
   const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
