@@ -133,47 +133,81 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
 
     const candles = chart.candles;
     const ts = candles.map(c => c.t);
+    const currentPrice = candles[candles.length - 1]?.c || 0;
 
-    // y min/max — include forecast range if available
-    let minY = Infinity, maxY = -Infinity;
-    for (const c of candles) {
-      if (c.l < minY) minY = c.l;
-      if (c.h > maxY) maxY = c.h;
-    }
+    // BLOCK 73.1.1: Y-scale depends on axis mode
+    let minY, maxY, yScale;
     
-    // Extend Y range to include forecast band
-    if (forecast?.pricePath?.length) {
-      // New format: pricePath, upperBand, lowerBand arrays
-      for (let i = 0; i < forecast.pricePath.length; i++) {
-        const upper = forecast.upperBand?.[i];
-        const lower = forecast.lowerBand?.[i];
-        if (upper && upper > maxY) maxY = upper;
-        if (lower && lower < minY) minY = lower;
+    if (isPercentMode && normalizedSeries) {
+      // PERCENT MODE: Use % range from backend
+      minY = normalizedSeries.yRange?.minPercent ?? -50;
+      maxY = normalizedSeries.yRange?.maxPercent ?? 50;
+      
+      // Add extra padding for visibility
+      const range = maxY - minY;
+      minY = Math.max(minY, -100); // Cap at -100%
+      maxY = Math.min(maxY, 200);  // Cap at +200% for readability
+      
+    } else {
+      // RAW PRICE MODE: Calculate from candles and forecast
+      minY = Infinity;
+      maxY = -Infinity;
+      
+      for (const c of candles) {
+        if (c.l < minY) minY = c.l;
+        if (c.h > maxY) maxY = c.h;
       }
-      // Also consider tail floor
-      if (forecast.tailFloor && forecast.tailFloor < minY) {
-        minY = forecast.tailFloor;
-      }
-    } else if (forecast?.points?.length) {
-      // Legacy format support
-      for (const p of forecast.points) {
-        if (p.lower < minY) minY = p.lower;
-        if (p.upper > maxY) maxY = p.upper;
-      }
-      if (forecast.tailFloor && forecast.tailFloor < minY) {
-        minY = forecast.tailFloor;
+      
+      // Extend Y range to include forecast band
+      if (forecast?.pricePath?.length) {
+        for (let i = 0; i < forecast.pricePath.length; i++) {
+          const upper = forecast.upperBand?.[i];
+          const lower = forecast.lowerBand?.[i];
+          if (upper && upper > maxY) maxY = upper;
+          if (lower && lower < minY) minY = lower;
+        }
+        if (forecast.tailFloor && forecast.tailFloor < minY) {
+          minY = forecast.tailFloor;
+        }
+      } else if (forecast?.points?.length) {
+        for (const p of forecast.points) {
+          if (p.lower < minY) minY = p.lower;
+          if (p.upper > maxY) maxY = p.upper;
+        }
+        if (forecast.tailFloor && forecast.tailFloor < minY) {
+          minY = forecast.tailFloor;
+        }
       }
     }
     
     const mm = paddedMinMax(minY, maxY, 0.08);
 
     const { x, step, plotW } = makeIndexXScale(candles.length, margins.left, margins.right, width);
-    const { y } = makeYScale(mm.minY, mm.maxY, margins.top, margins.bottom, height);
+    
+    // BLOCK 73.1.1: Create appropriate Y scale
+    let y;
+    if (isPercentMode) {
+      // Y scale for percent values
+      const { y: yPercent } = makeYScale(mm.minY, mm.maxY, margins.top, margins.bottom, height);
+      // Wrapper that converts price to percent then maps
+      y = (price) => {
+        const pct = ((price / currentPrice) - 1) * 100;
+        return yPercent(pct);
+      };
+      // Also expose percent scale directly
+      y.percent = yPercent;
+      y.isPercent = true;
+      y.currentPrice = currentPrice;
+    } else {
+      const { y: yPrice } = makeYScale(mm.minY, mm.maxY, margins.top, margins.bottom, height);
+      y = yPrice;
+      y.isPercent = false;
+    }
 
     // phases -> grid -> candles -> sma -> forecast
     drawPhases(ctx, chart.phaseZones, ts, x, margins.top, height, margins.bottom);
     drawGrid(ctx, width, height, margins.left, margins.top, margins.right, margins.bottom);
-    drawCandles(ctx, candles, x, y, step);
+    drawCandles(ctx, candles, x, y, step, isPercentMode, currentPrice);
     drawSMA(ctx, chart.sma200, ts, x, y);
 
     // anchor at last candle x
