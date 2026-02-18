@@ -130,12 +130,12 @@ export function drawHybridForecast(
   ctx.restore();
   
   // === 5. REPLAY LINE (purple) with spline ===
-  if (replayPath.length > 0) {
-    const replayLen = Math.min(replayPath.length, N);
-    const replayPoints = [{ x: xRightAnchor, y: y(replayPath[0]) }];
-    for (let i = 0; i < replayLen; i++) {
-      replayPoints.push({ x: dayToX(i + 1), y: y(replayPath[i]) });
-    }
+  // BLOCK 73.3: Use replayData from unified path
+  if (replayData.length > 0) {
+    const replayPoints = replayData.map(p => ({
+      x: dayToX(p.t),
+      y: y(p.price)
+    }));
     
     ctx.save();
     ctx.shadowColor = 'rgba(139, 92, 246, 0.2)';
@@ -152,7 +152,8 @@ export function drawHybridForecast(
   }
   
   // === 6. END MARKERS ===
-  const lastSyntheticY = y(pricePath[N - 1]);
+  const lastSynthetic = syntheticData[syntheticData.length - 1];
+  const lastSyntheticY = y(lastSynthetic.price);
   const endX = dayToX(N);
   
   // Synthetic end marker
