@@ -159,6 +159,9 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   // P1.5 — Volatility Attribution (performance by regime)
   await fastify.register(registerVolatilityRoutes);
 
+  // BLOCK 67-68 — Regime Alert System
+  await fastify.register(registerAlertRoutes);
+
   // Run bootstrap in background (non-blocking)
   const bootstrap = new FractalBootstrapService();
   bootstrap.ensureBootstrapped().catch(err => {
