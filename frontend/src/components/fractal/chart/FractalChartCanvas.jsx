@@ -263,14 +263,39 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
     ctx.fillStyle = "rgba(0,0,0,0.5)";
     ctx.font = "11px system-ui";
     const yTicks = 5;
-    for (let i = 0; i <= yTicks; i++) {
-      const price = mm.minY + (i / yTicks) * (mm.maxY - mm.minY);
-      const yPos = y(price);
-      ctx.fillText(price.toLocaleString(undefined, { maximumFractionDigits: 0 }), 4, yPos + 4);
+    
+    if (isPercentMode && y.percent) {
+      // PERCENT MODE: Show % labels
+      for (let i = 0; i <= yTicks; i++) {
+        const pct = mm.minY + (i / yTicks) * (mm.maxY - mm.minY);
+        const yPos = y.percent(pct);
+        const label = pct >= 0 ? `+${pct.toFixed(0)}%` : `${pct.toFixed(0)}%`;
+        ctx.fillText(label, 4, yPos + 4);
+      }
+      // Draw NOW reference line at 0%
+      const nowY = y.percent(0);
+      ctx.strokeStyle = 'rgba(34, 197, 94, 0.5)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(margins.left, nowY);
+      ctx.lineTo(width - margins.right, nowY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // NOW label
+      ctx.fillStyle = '#22c55e';
+      ctx.fillText('NOW', margins.left - 35, nowY + 4);
+    } else {
+      // PRICE MODE: Show $ labels
+      for (let i = 0; i <= yTicks; i++) {
+        const price = mm.minY + (i / yTicks) * (mm.maxY - mm.minY);
+        const yPos = y(price);
+        ctx.fillText(price.toLocaleString(undefined, { maximumFractionDigits: 0 }), 4, yPos + 4);
+      }
     }
     ctx.restore();
 
-  }, [chart, forecast, focus, mode, primaryMatch, renderMode, width, height, margins, hoverIndex]);
+  }, [chart, forecast, focus, mode, primaryMatch, normalizedSeries, isPercentMode, renderMode, width, height, margins, hoverIndex]);
 
   const hoverCandle = hoverIndex !== null && chart?.candles?.[hoverIndex];
   const hoverSma = hoverCandle && chart?.sma200?.find(s => s.t === hoverCandle.t)?.value;
