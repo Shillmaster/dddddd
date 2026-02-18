@@ -731,12 +731,14 @@ export class PhasePerformanceService {
       // Grade with sample-based caps
       const grade = calcGrade(score, sampleQuality);
       
-      // Generate warnings
+      // Generate warnings (institutional risk flags)
       const phaseWarnings: string[] = [];
       if (sampleQuality === 'LOW_SAMPLE') phaseWarnings.push('LOW_SAMPLE');
       if (sampleQuality === 'VERY_LOW_SAMPLE') phaseWarnings.push('VERY_LOW_SAMPLE');
+      if (stats.p10 < tailThreshold) phaseWarnings.push('HIGH_TAIL');
       if (avgDivergenceScore < 55) phaseWarnings.push('HIGH_DIVERGENCE');
       if (recencyWeight < 0.4) phaseWarnings.push('RECENCY_BIAS');
+      if (score < 55) phaseWarnings.push('LOW_EDGE');
       
       phases.push({
         phaseId: `phase_${phaseType.toLowerCase()}`,
@@ -762,10 +764,15 @@ export class PhasePerformanceService {
       });
     }
     
-    // Sort by grade (A first)
+    // INSTITUTIONAL SORTING: Score desc, but penalize low samples
     phases.sort((a, b) => {
+      // First by grade
       const gradeOrder = { A: 0, B: 1, C: 2, D: 3, F: 4 };
-      return gradeOrder[a.grade] - gradeOrder[b.grade];
+      const gradeDiff = gradeOrder[a.grade] - gradeOrder[b.grade];
+      if (gradeDiff !== 0) return gradeDiff;
+      
+      // Then by score within same grade
+      return b.score - a.score;
     });
     
     return phases;
