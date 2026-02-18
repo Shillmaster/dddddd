@@ -1,14 +1,14 @@
 /**
- * BLOCK 52.5.2 — Aftermath-Driven Forecast Renderer (FINAL CALIBRATION)
+ * BLOCK 70.2 STEP 2 — Focus-Aware Forecast Renderer
+ * 
+ * UPDATED: Now uses dynamic markers from focusPack.forecast.markers
+ * Instead of hardcoded 7d/14d/30d markers, shows markers appropriate 
+ * for the current focus horizon.
  * 
  * Features:
- * - Forecast zone background with "FORECAST" label
- * - Vertical separator at forecast start
- * - Price path with confidence decay (fades towards 30d)
- * - √t band growth (institutional standard)
- * - Upgraded tail floor marker with dot and label
- * - Key day markers (7d, 14d, 30d) with proper padding
- * - Forecast info label
+ * - Dynamic forecast zone width based on aftermathDays
+ * - Focus-specific markers (only shows days <= current focus)
+ * - Confidence band that matches actual distribution series length
  */
 
 export function drawForecast(
