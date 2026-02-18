@@ -89,6 +89,19 @@ PUBLIC_ADMIN_URL=https://tradeanalyzer-8.preview.emergentagent.com
 - **Admin:** /admin/fractal
 - **Alerts:** /admin/fractal?tab=alerts
 
+### 2026-02-18 — BLOCK 70.2: Real Horizon Binding (STEP 1)
+- ✅ New endpoint: `/api/fractal/v2.1/focus-pack`
+- ✅ Each horizon returns DIFFERENT data:
+  - 7d → 7 points, 15 matches
+  - 14d → 14 points, 12 matches
+  - 30d → 30 points, 10 matches
+  - 90d → 90 points, 8 matches
+  - 180d → 120 points, 6 matches
+  - 365d → 180 points, 5 matches
+- ✅ Distribution series length = aftermathDays
+- ✅ Validation endpoint: `/api/fractal/v2.1/focus-pack/validate`
+- Files: `focus.types.ts`, `focus-pack.builder.ts`, `focus.routes.ts`
+
 ## Prioritized Backlog
 
 ### P0 (Done)
@@ -96,16 +109,17 @@ PUBLIC_ADMIN_URL=https://tradeanalyzer-8.preview.emergentagent.com
 - [x] Daily Cron Order (ALERTS_RUN)
 - [x] Contract Lock v2.1.1
 - [x] BLOCK B: Module Isolation
+- [x] BLOCK 70.2 STEP 1: FocusPack Backend
 
 ### P1 (Next)
-- [ ] BLOCK C: MetaBrain Integration Contract
-- [ ] Add real TG_BOT_TOKEN credentials
-- [ ] Enable FRACTAL_ALERTS_ENABLED=true
+- [ ] BLOCK 70.2 STEP 2: Frontend wiring (HorizonSelector → refetch)
+- [ ] BLOCK 71: Interactive Fractal Explorer
+- [ ] BLOCK 72: Multi-Layer Market Map
 
 ### P2 (Future)
+- [ ] BLOCK C: MetaBrain Integration Contract
 - [ ] BLOCK D: Full Documentation Pack
 - [ ] BLOCK F: Production Packaging (Docker)
-- [ ] PHASE 4: WebSocket push (carefully)
 
 ## Last Updated
-2026-02-18 — BLOCK B + Telegram + Contract v2.1.1 Complete
+2026-02-18 — BLOCK 70.2 STEP 1 Complete (Real Horizon Binding)
