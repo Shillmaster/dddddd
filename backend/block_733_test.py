@@ -310,11 +310,11 @@ class Block733Tester:
                 
                 # Check for forecast (synthetic) data
                 forecast = focus_pack.get("forecast", {})
-                price_path = forecast.get("pricePath", [])
+                price_path = forecast.get("path", [])  # Changed from 'pricePath' to 'path'
                 
                 if not price_path:
                     success = False
-                    details["error"] = "Expected 'pricePath' for synthetic line"
+                    details["error"] = "Expected 'path' for synthetic line"
                 else:
                     details["synthetic_path_length"] = len(price_path)
                 
