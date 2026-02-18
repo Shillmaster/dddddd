@@ -71,6 +71,10 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
   const ref = useRef(null);
   const [hoverIndex, setHoverIndex] = useState(null);
   
+  // BLOCK 73.5.1: Phase hover state
+  const [hoveredPhase, setHoveredPhase] = useState(null);
+  const [phaseTooltipPos, setPhaseTooltipPos] = useState({ x: 0, y: 0 });
+  
   // BLOCK 73.1.1: Determine axis mode from backend normalizedSeries
   const renderMode = focus === '7d' ? 'CAPSULE_7D' : 'TRAJECTORY';
   const axisMode = normalizedSeries?.mode === 'PERCENT' ? 'PERCENT' : 'PRICE';
@@ -78,6 +82,12 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
 
   // Increased right margin for forecast zone (enough for full 30d + labels)
   const margins = useMemo(() => ({ left: 70, right: 320, top: 24, bottom: 36 }), []);
+  
+  // BLOCK 73.5.1: Phase zones from chart
+  const phaseZones = useMemo(() => chart?.phaseZones || [], [chart]);
+  const phaseStats = useMemo(() => chart?.phaseStats || [], [chart]);
+
+  // Mouse handler
 
   // Mouse handler
   useEffect(() => {
