@@ -134,17 +134,19 @@ export async function registerAlertRoutes(app: FastifyInstance) {
   // POST /admin/alerts/run - Production run (evaluate + send)
   // ═══════════════════════════════════════════════════════════════
   app.post(`${prefix}/run`, async (request) => {
-    const body = request.body as AlertEngineContext;
+    const body = (request.body || {}) as Partial<AlertEngineContext>;
     
-    // Validate BTC-only
-    if (body.symbol !== 'BTC') {
-      return { ok: false, error: 'Only BTC is supported' };
-    }
+    // Build context with defaults
+    const ctx: AlertEngineContext = {
+      symbol: 'BTC',
+      current: body.current || {},
+      previous: body.previous || {}
+    };
     
     // Run full alert engine
-    const result = await runAlertEngine(body);
+    const result = await runAlertEngine(ctx);
     
-    // Send alerts via Telegram
+    // Send alerts via Telegram (respects FRACTAL_ALERTS_ENABLED)
     const tgResult = await sendAlertsToTelegram(result.events, app.log);
     
     return {
