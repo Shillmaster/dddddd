@@ -348,12 +348,51 @@ const styles = {
     alignItems: 'center',
     marginBottom: '16px',
   },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+  },
   title: {
     fontSize: '12px',
     fontWeight: '600',
     color: '#6b7280',
     textTransform: 'uppercase',
     letterSpacing: '0.05em',
+  },
+  // BLOCK 74.3: Structural Lock Badge
+  lockBadge: {
+    fontSize: '10px',
+    fontWeight: '700',
+    padding: '4px 10px',
+    borderRadius: '4px',
+    backgroundColor: '#e0e7ff',
+    color: '#3730a3',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+  },
+  // BLOCK 74.3: Dominance Alert
+  dominanceAlert: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '10px 14px',
+    backgroundColor: '#eef2ff',
+    borderRadius: '8px',
+    border: '1px solid #c7d2fe',
+    marginBottom: '16px',
+  },
+  alertIcon: {
+    fontSize: '16px',
+  },
+  alertText: {
+    fontSize: '12px',
+    color: '#3730a3',
+  },
+  blockedText: {
+    color: '#dc2626',
+    fontWeight: '600',
   },
   regimeBadge: {
     fontSize: '10px',
