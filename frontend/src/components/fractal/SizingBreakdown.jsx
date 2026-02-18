@@ -43,15 +43,43 @@ export function SizingBreakdown({ sizing, volatility }) {
     return null;
   }
 
-  const { breakdown, finalSize, finalPercent, formula, mode, blockers } = sizing;
+  const { 
+    breakdown, 
+    finalSize, 
+    finalPercent, 
+    formula, 
+    mode, 
+    blockers,
+    // BLOCK 73.8: Phase grade data
+    phaseGrade,
+    phaseSampleQuality,
+    phaseScore,
+    confidenceAdjustment,
+  } = sizing;
 
   return (
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.title}>SIZING BREAKDOWN</div>
-        <div style={styles.mode} data-mode={mode}>
-          {mode}
+        <div style={styles.headerRight}>
+          {/* BLOCK 73.8: Phase Grade Badge */}
+          {phaseGrade && (
+            <div 
+              style={{
+                ...styles.gradeBadge,
+                backgroundColor: GRADE_COLORS[phaseGrade]?.bg || '#f3f4f6',
+                color: GRADE_COLORS[phaseGrade]?.text || '#374151',
+              }}
+              data-testid="phase-grade-badge"
+              title={`Phase Score: ${phaseScore?.toFixed(0) || 'N/A'} | Sample: ${phaseSampleQuality || 'N/A'}`}
+            >
+              Phase: {phaseGrade}
+            </div>
+          )}
+          <div style={styles.mode} data-mode={mode}>
+            {mode}
+          </div>
         </div>
       </div>
 
@@ -62,6 +90,22 @@ export function SizingBreakdown({ sizing, volatility }) {
           {finalPercent?.toFixed(1) || '0.0'}%
         </div>
       </div>
+
+      {/* BLOCK 73.8: Confidence Adjustment */}
+      {confidenceAdjustment && confidenceAdjustment.adjustmentPp !== 0 && (
+        <div style={styles.confAdjustment}>
+          <span style={styles.confLabel}>Confidence Adj:</span>
+          <span style={{
+            ...styles.confValue,
+            color: confidenceAdjustment.adjustmentPp > 0 ? '#166534' : '#991b1b',
+          }}>
+            {confidenceAdjustment.adjustmentPp > 0 ? '+' : ''}{(confidenceAdjustment.adjustmentPp * 100).toFixed(0)}pp
+          </span>
+          <span style={styles.confReason}>
+            ({confidenceAdjustment.reason?.replace(/_/g, ' ')})
+          </span>
+        </div>
+      )}
 
       {/* Blockers */}
       {blockers && blockers.length > 0 && (
