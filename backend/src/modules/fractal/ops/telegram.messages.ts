@@ -69,6 +69,11 @@ export function buildDailyReport(s: DailyRunSummary): string {
     ? `Alerts: sent <b>${s.alerts.sent}</b> | blocked <b>${s.alerts.blocked}</b> | quota <b>${s.alerts.quotaUsed}/${s.alerts.quotaMax}</b>`
     : 'Alerts: —';
 
+  // Build memory line (BLOCK 75)
+  const memoryLine = s.memory
+    ? `🧠 MEMORY: wrote <b>${s.memory.snapshotsWritten}</b> | resolved <b>${s.memory.outcomesResolved}</b>`
+    : '';
+
   return [
     `${healthEmoji} <b>FRACTAL DAILY</b> — ${s.symbol}`,
     ``,
