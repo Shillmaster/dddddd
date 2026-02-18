@@ -90,52 +90,40 @@ export async function buildFocusPack(
     console.error('[FocusPack] Match error:', err);
   }
   
-  // BLOCK 73.5.2: Filter matches by phase if phaseId provided
+  // BLOCK 73.5.2: Filter matches by phase TYPE if phaseId provided
+  // phaseId format: "PHASENAME_YYYY-MM-DD_YYYY-MM-DD"
+  // We filter by phase TYPE (ACCUMULATION, DISTRIBUTION, etc), not by date range
   let filteredMatches = matchResult?.matches || [];
   let phaseFilter: any = null;
   
   if (phaseId) {
-    // Parse phaseId format: "PHASE_FROM_TO" or "PHASENAME_YYYY-MM-DD_YYYY-MM-DD"
+    // Parse phaseId to extract phase type
     const parts = phaseId.split('_');
     if (parts.length >= 3) {
-      const from = parts[parts.length - 2]; // Second to last
-      const to = parts[parts.length - 1];   // Last
+      // Phase type is everything before the dates
+      // e.g., "DISTRIBUTION_2025-02-18_2025-02-24" -> phaseType = "DISTRIBUTION"
+      const phaseType = parts.slice(0, -2).join('_').toUpperCase();
+      const from = parts[parts.length - 2];
+      const to = parts[parts.length - 1];
       
-      if (from && to) {
-        const fromTs = new Date(from).getTime();
-        // Include end of day for toTs
-        const toTs = new Date(to + 'T23:59:59.999Z').getTime();
-        
-        // Debug: Log match dates
-        console.log('[FocusPack] Phase filter range:', from, 'to', to);
-        console.log('[FocusPack] First 5 match dates:', filteredMatches.slice(0, 5).map((m: any) => ({
-          id: m.id,
-          date: m.date,
-          ts: new Date(m.date || m.id).getTime()
-        })));
-        console.log('[FocusPack] Range in ts:', fromTs, 'to', toTs);
-        
-        // Filter matches that fall within phase date range
-        const originalCount = filteredMatches.length;
-        filteredMatches = filteredMatches.filter((m: any) => {
-          const matchDate = m.date || m.id;
-          const matchTs = new Date(matchDate).getTime();
-          const inRange = matchTs >= fromTs && matchTs <= toTs;
-          if (inRange) console.log('[FocusPack] Match in range:', matchDate, matchTs);
-          return inRange;
-        });
-        
-        phaseFilter = {
-          phaseId,
-          from,
-          to,
-          originalMatchCount: originalCount,
-          filteredMatchCount: filteredMatches.length,
-          active: true
-        };
-        
-        console.log(`[FocusPack] Phase filter: ${phaseId}, matches: ${originalCount} -> ${filteredMatches.length}`);
-      }
+      // Filter matches by phase TYPE
+      const originalCount = filteredMatches.length;
+      filteredMatches = filteredMatches.filter((m: any) => {
+        const matchPhase = (m.phase || '').toUpperCase();
+        return matchPhase === phaseType;
+      });
+      
+      console.log(`[FocusPack] Phase filter by TYPE: ${phaseType}, matches: ${originalCount} -> ${filteredMatches.length}`);
+      
+      phaseFilter = {
+        phaseId,
+        phaseType,
+        from,
+        to,
+        originalMatchCount: originalCount,
+        filteredMatchCount: filteredMatches.length,
+        active: true
+      };
     }
   }
   
