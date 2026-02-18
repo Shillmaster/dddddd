@@ -41,6 +41,12 @@ import {
   type VolatilityResult,
   type VolatilityApplied,
 } from '../volatility/index.js';
+import { 
+  phasePerformanceService, 
+  type Grade, 
+  type SampleQuality,
+  type PhaseType 
+} from '../admin/dashboard/phase-performance.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
