@@ -151,15 +151,52 @@ export function FractalChartCanvas({
       setHoverIndex(null);
       setHoveredPhase(null);
     };
+    
+    // BLOCK 73.5.2: Handle phase click
+    const handleClick = (e) => {
+      if (!onPhaseClick) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const plotW = width - margins.left - margins.right;
+      const step = plotW / (chart.candles.length - 1);
+      const index = Math.round((mx - margins.left) / step);
+      
+      if (index >= 0 && index < chart.candles.length) {
+        const candle = chart.candles[index];
+        const candleTs = candle.t;
+        
+        // Find phase zone containing this candle
+        const zone = phaseZones.find(z => candleTs >= z.from && candleTs <= z.to);
+        
+        if (zone && phaseStats.length > 0) {
+          const stats = phaseStats.find(s => 
+            s.from === new Date(zone.from).toISOString() || 
+            new Date(s.from).getTime() === zone.from
+          );
+          
+          if (stats) {
+            // Toggle selection - if same phase clicked again, deselect
+            if (selectedPhaseId === stats.phaseId) {
+              onPhaseClick(null);
+            } else {
+              onPhaseClick(stats.phaseId, stats);
+            }
+          }
+        }
+      }
+    };
 
     canvas.addEventListener("mousemove", handleMove);
     canvas.addEventListener("mouseleave", handleLeave);
+    canvas.addEventListener("click", handleClick);
 
     return () => {
       canvas.removeEventListener("mousemove", handleMove);
       canvas.removeEventListener("mouseleave", handleLeave);
+      canvas.removeEventListener("click", handleClick);
     };
-  }, [chart, width, margins, phaseZones, phaseStats]);
+  }, [chart, width, margins, phaseZones, phaseStats, onPhaseClick, selectedPhaseId]);
 
   // Render
   useEffect(() => {
