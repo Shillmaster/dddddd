@@ -5,6 +5,7 @@ import { drawCandles } from "./layers/drawCandles";
 import { drawSMA } from "./layers/drawSMA";
 import { drawPhases } from "./layers/drawPhases";
 import { drawForecast } from "./layers/drawForecast";
+import { drawForecastCapsule7d } from "./layers/drawForecastCapsule7d";
 import { makeIndexXScale, makeYScale, paddedMinMax } from "./math/scale";
 
 function Tooltip({ candle, sma, phase }) {
