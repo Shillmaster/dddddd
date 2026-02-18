@@ -194,9 +194,10 @@ function calcExpectancy(returns: number[]): number {
   return winRate * avgWin - (1 - winRate) * avgLoss;
 }
 
-function getSampleQuality(samples: number): SampleQuality {
-  if (samples >= SAMPLE_THRESHOLDS.OK) return 'OK';
-  if (samples >= SAMPLE_THRESHOLDS.LOW) return 'LOW_SAMPLE';
+function getSampleQuality(samples: number, tier: Tier): SampleQuality {
+  const thresholds = TIER_SAMPLE_THRESHOLDS[tier];
+  if (samples >= thresholds.OK) return 'OK';
+  if (samples >= thresholds.LOW) return 'LOW_SAMPLE';
   return 'VERY_LOW_SAMPLE';
 }
 
@@ -205,12 +206,30 @@ function normalize(value: number, min: number, max: number): number {
   return Math.max(0, Math.min(1, (value - min) / (max - min)));
 }
 
-function calcGrade(score: number): Grade {
-  if (score >= 85) return 'A';
-  if (score >= 70) return 'B';
-  if (score >= 55) return 'C';
-  if (score >= 40) return 'D';
-  return 'F';
+/**
+ * INSTITUTIONAL GRADE CALCULATION
+ * Grade with sample-based caps:
+ * - LOW_SAMPLE: max grade C
+ * - VERY_LOW_SAMPLE: max grade D
+ */
+function calcGrade(score: number, sampleQuality: SampleQuality): Grade {
+  let grade: Grade;
+  
+  if (score >= 85) grade = 'A';
+  else if (score >= 70) grade = 'B';
+  else if (score >= 55) grade = 'C';
+  else if (score >= 40) grade = 'D';
+  else grade = 'F';
+  
+  // Apply sample quality caps
+  if (sampleQuality === 'LOW_SAMPLE' && (grade === 'A' || grade === 'B')) {
+    grade = 'C'; // Cap at C for low samples
+  }
+  if (sampleQuality === 'VERY_LOW_SAMPLE' && (grade === 'A' || grade === 'B' || grade === 'C')) {
+    grade = 'D'; // Cap at D for very low samples
+  }
+  
+  return grade;
 }
 
 function calcRecencyWeight(dates: Date[], now: Date): number {
