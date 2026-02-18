@@ -212,12 +212,39 @@ export class AdaptiveSizingService {
         tailRiskMod,
         reliabilityMod,
         governanceMod,
+        phaseMod,  // BLOCK 73.7
         sizeBeforeVol,
         finalSize,
       },
       blockers: [],
       explain,
     };
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BLOCK 73.7: PHASE MODIFIER COMPUTATION
+  // ═══════════════════════════════════════════════════════════════
+
+  private computePhaseModifier(
+    phaseGrade?: 'A' | 'B' | 'C' | 'D' | 'F',
+    phaseSampleQuality?: 'OK' | 'LOW_SAMPLE' | 'VERY_LOW_SAMPLE'
+  ): number {
+    // No phase data → neutral modifier
+    if (!phaseGrade) return 1.0;
+    
+    // Get base multiplier from grade
+    let multiplier = PHASE_GRADE_MULTIPLIER[phaseGrade] ?? 1.0;
+    
+    // Apply sample quality caps (prevent boost on uncertain data)
+    if (phaseSampleQuality === 'LOW_SAMPLE') {
+      // Cap at 1.0 - no boost for low samples, but allow penalties
+      multiplier = Math.min(multiplier, PHASE_LOW_SAMPLE_CAP);
+    } else if (phaseSampleQuality === 'VERY_LOW_SAMPLE') {
+      // Cap at 0.90 - slight penalty for very low samples
+      multiplier = Math.min(multiplier, PHASE_VERY_LOW_CAP);
+    }
+    
+    return multiplier;
   }
 
   // ═══════════════════════════════════════════════════════════════
