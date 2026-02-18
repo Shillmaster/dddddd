@@ -565,29 +565,212 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
             voteWeight,
           };
         }),
-        // BLOCK 74.2: Institutional Consensus
+        // BLOCK 74.2 + 74.3: Institutional Consensus with Hard Structural Dominance
         consensus74: (() => {
+          // ═══════════════════════════════════════════════════════════════
+          // BLOCK 74.3: Adaptive Weighting 2.0 — Desk-Grade Decision Engine
+          // ═══════════════════════════════════════════════════════════════
+          
+          // Step 1: Calculate base weights with regime modifiers
+          const regime = volatilityResult.regime as string;
+          const regimeModifiers: Record<string, Record<string, number>> = {
+            'CRISIS': { STRUCTURE: 1.35, TACTICAL: 1.10, TIMING: 0.60 },
+            'EXPANSION': { STRUCTURE: 0.85, TACTICAL: 1.05, TIMING: 1.20 },
+            'HIGH': { STRUCTURE: 1.10, TACTICAL: 1.05, TIMING: 0.85 },
+            'LOW': { STRUCTURE: 0.90, TACTICAL: 1.00, TIMING: 1.15 },
+            'NORMAL': { STRUCTURE: 1.00, TACTICAL: 1.00, TIMING: 1.00 },
+          };
+          const regimeMods = regimeModifiers[regime] || regimeModifiers['NORMAL'];
+          
+          // Step 2: Calculate weighted votes with all modifiers
           const votes = horizonMatrix.map(h => {
-            const dir = h.direction === 'BULL' ? 1 : h.direction === 'BEAR' ? -1 : 0;
             const tier = h.tier as 'TIMING' | 'TACTICAL' | 'STRUCTURE';
-            const baseWeight = tier === 'STRUCTURE' ? 0.42 : tier === 'TACTICAL' ? 0.36 : 0.22;
-            const weight = baseWeight / horizonMatrix.length;
-            return { horizon: h.horizon, direction: h.direction === 'BULL' ? 'BULLISH' : h.direction === 'BEAR' ? 'BEARISH' : 'FLAT', weight, contribution: dir * weight * h.confidence };
+            const dirScore = h.direction === 'BULL' ? 1 : h.direction === 'BEAR' ? -1 : 0;
+            const direction = h.direction === 'BULL' ? 'BULLISH' : h.direction === 'BEAR' ? 'BEARISH' : 'FLAT';
+            
+            // Base tier weight
+            const baseTierWeight = tier === 'STRUCTURE' ? 0.42 : tier === 'TACTICAL' ? 0.36 : 0.22;
+            
+            // Regime modifier
+            const regimeMod = regimeMods[tier] || 1.0;
+            
+            // Divergence modifier (entropy-based)
+            const divGrade = h.entropy < 0.3 ? 'A' : h.entropy < 0.5 ? 'B' : h.entropy < 0.7 ? 'C' : h.entropy < 0.85 ? 'D' : 'F';
+            const divMod = { A: 1.05, B: 1.00, C: 0.90, D: 0.75, F: 0.55 }[divGrade] || 1.0;
+            const highDivPenalty = h.entropy > 0.7 ? 0.85 : 1.0;
+            
+            // Phase quality modifier (simplified - using confidence as proxy)
+            const phaseGrade = h.confidence > 0.7 ? 'A' : h.confidence > 0.5 ? 'B' : h.confidence > 0.3 ? 'C' : h.confidence > 0.15 ? 'D' : 'F';
+            const phaseMod = { A: 1.10, B: 1.05, C: 1.00, D: 0.85, F: 0.65 }[phaseGrade] || 1.0;
+            
+            // Final weight calculation
+            const weight = baseTierWeight * regimeMod * divMod * highDivPenalty * phaseMod;
+            const contribution = dirScore * weight * h.confidence;
+            
+            return { 
+              horizon: h.horizon, 
+              tier,
+              direction, 
+              weight, 
+              contribution,
+              divGrade,
+              phaseGrade,
+            };
           });
-          const rawConsensus = votes.reduce((sum, v) => sum + v.contribution, 0);
-          const consensusIdx = Math.round(50 + rawConsensus * 50);
-          const bullW = votes.filter(v => v.direction === 'BULLISH').reduce((s, v) => s + v.weight, 0);
-          const bearW = votes.filter(v => v.direction === 'BEARISH').reduce((s, v) => s + v.weight, 0);
-          const conflictLvl = Math.abs(bullW - bearW) < 0.2 ? 'HIGH' : Math.abs(bullW - bearW) < 0.35 ? 'MODERATE' : 'LOW';
-          const structDir = horizonMatrix.filter(h => h.tier === 'STRUCTURE').reduce((d, h) => h.direction === 'BULL' ? 'BULLISH' : h.direction === 'BEAR' ? 'BEARISH' : d, 'FLAT' as string);
-          const action = rawConsensus > 0.1 ? 'BUY' : rawConsensus < -0.1 ? 'SELL' : 'HOLD';
+          
+          // Step 3: Normalize weights
+          const totalWeight = votes.reduce((sum, v) => sum + v.weight, 0);
+          const normalizedVotes = votes.map(v => ({
+            ...v,
+            weight: totalWeight > 0 ? v.weight / totalWeight : 0,
+            contribution: totalWeight > 0 ? v.contribution / totalWeight : 0,
+          }));
+          
+          // Step 4: Calculate tier weight sums
+          const structureWeightSum = normalizedVotes.filter(v => v.tier === 'STRUCTURE').reduce((s, v) => s + v.weight, 0);
+          const tacticalWeightSum = normalizedVotes.filter(v => v.tier === 'TACTICAL').reduce((s, v) => s + v.weight, 0);
+          const timingWeightSum = normalizedVotes.filter(v => v.tier === 'TIMING').reduce((s, v) => s + v.weight, 0);
+          
+          // Step 5: Determine tier directions
+          const getDirectionForTier = (tier: string) => {
+            const tierVotes = normalizedVotes.filter(v => v.tier === tier);
+            const bullScore = tierVotes.filter(v => v.direction === 'BULLISH').reduce((s, v) => s + v.weight, 0);
+            const bearScore = tierVotes.filter(v => v.direction === 'BEARISH').reduce((s, v) => s + v.weight, 0);
+            if (bullScore > bearScore * 1.1) return 'BULLISH';
+            if (bearScore > bullScore * 1.1) return 'BEARISH';
+            return 'FLAT';
+          };
+          
+          const structuralDirection = getDirectionForTier('STRUCTURE');
+          const tacticalDirection = getDirectionForTier('TACTICAL');
+          const timingDirection = getDirectionForTier('TIMING');
+          
+          // ═══════════════════════════════════════════════════════════════
+          // BLOCK 74.3: HARD STRUCTURAL DOMINANCE RULE
+          // If STRUCTURE weight >= 55%, STRUCTURE determines direction
+          // TIMING can only affect size, NOT reverse direction
+          // ═══════════════════════════════════════════════════════════════
+          const STRUCTURAL_DOMINANCE_THRESHOLD = 0.55;
+          const structuralLock = structureWeightSum >= STRUCTURAL_DOMINANCE_THRESHOLD;
+          const dominance = structuralLock ? 'STRUCTURE' : (tacticalWeightSum > structureWeightSum ? 'TACTICAL' : 'STRUCTURE');
+          
+          // Raw consensus from all votes
+          const rawConsensus = normalizedVotes.reduce((sum, v) => sum + v.contribution, 0);
+          
+          // Determine final direction based on dominance
+          let finalDirection: string;
+          let timingOverrideBlocked = false;
+          let conflictLevel: string;
+          let conflictReasons: string[] = [];
+          let sizePenalty = 1.0;
+          
+          if (structuralLock) {
+            // STRUCTURE dominates - use structural direction
+            finalDirection = structuralDirection;
+            
+            // Check if TIMING conflicts with STRUCTURE
+            if (timingDirection !== 'FLAT' && timingDirection !== structuralDirection) {
+              timingOverrideBlocked = true;
+              conflictLevel = 'STRUCTURAL_LOCK';
+              conflictReasons.push(`Timing (${timingDirection}) blocked by Structure (${structuralDirection})`);
+              conflictReasons.push(`Structural dominance: ${(structureWeightSum * 100).toFixed(0)}% weight`);
+              sizePenalty = 0.65; // Penalty when timing conflicts
+            } else if (tacticalDirection !== 'FLAT' && tacticalDirection !== structuralDirection) {
+              conflictLevel = 'MODERATE';
+              conflictReasons.push(`Tactical (${tacticalDirection}) vs Structure (${structuralDirection})`);
+              sizePenalty = 0.80;
+            } else {
+              conflictLevel = 'NONE';
+            }
+          } else {
+            // No structural lock - use consensus
+            const bullW = normalizedVotes.filter(v => v.direction === 'BULLISH').reduce((s, v) => s + v.weight, 0);
+            const bearW = normalizedVotes.filter(v => v.direction === 'BEARISH').reduce((s, v) => s + v.weight, 0);
+            finalDirection = bullW > bearW * 1.1 ? 'BULLISH' : bearW > bullW * 1.1 ? 'BEARISH' : 'FLAT';
+            
+            const diff = Math.abs(bullW - bearW);
+            if (diff < 0.15) {
+              conflictLevel = 'HIGH';
+              conflictReasons.push('Mixed signals across tiers');
+            } else if (diff < 0.30) {
+              conflictLevel = 'MODERATE';
+            } else {
+              conflictLevel = 'LOW';
+            }
+          }
+          
+          // Divergence penalty count
+          const divergencePenalties = normalizedVotes.filter(v => v.divGrade === 'D' || v.divGrade === 'F').length;
+          const phasePenalties = normalizedVotes.filter(v => v.phaseGrade === 'D' || v.phaseGrade === 'F').length;
+          
+          // Apply divergence penalty to size
+          if (divergencePenalties > 0) {
+            sizePenalty *= (divergencePenalties >= 3 ? 0.5 : divergencePenalties >= 2 ? 0.7 : 0.85);
+            conflictReasons.push(`Divergence penalties: ${divergencePenalties} horizons`);
+          }
+          
+          // Map direction to action
+          const action = finalDirection === 'BULLISH' ? 'BUY' : finalDirection === 'BEARISH' ? 'SELL' : 'HOLD';
+          
+          // Determine mode
+          let mode: string;
+          if (action === 'HOLD') {
+            mode = 'WAIT';
+          } else if (structuralLock && timingOverrideBlocked) {
+            mode = 'COUNTER_SIGNAL_BLOCKED';
+          } else if (timingDirection === structuralDirection) {
+            mode = 'TREND_FOLLOW';
+          } else {
+            mode = 'COUNTER_TREND';
+          }
+          
+          // Final size multiplier
+          const baseSize = Math.min(1.0, Math.abs(rawConsensus) * 1.5);
+          const sizeMultiplier = Math.round(baseSize * sizePenalty * 100) / 100;
+          
+          // Consensus index (0-100, 50 = neutral)
+          const consensusIndex = Math.round(50 + rawConsensus * 50);
+          
           return {
-            consensusIndex: consensusIdx,
-            conflictLevel: conflictLvl,
-            votes,
-            conflictReasons: conflictLvl === 'HIGH' ? ['Mixed signals across tiers'] : [],
-            resolved: { action, mode: action === 'HOLD' ? 'WAIT' : 'TREND_FOLLOW', sizeMultiplier: Math.min(1, Math.abs(rawConsensus) * 1.5), dominantTier: 'STRUCTURE' },
-            adaptiveMeta: { regime: volatilityResult.regime, structuralDominance: true, divergencePenalties: 0, phasePenalties: 0, stabilityGuard: false },
+            consensusIndex,
+            direction: finalDirection,
+            conflictLevel,
+            // BLOCK 74.3: Structural dominance fields
+            dominance,
+            structuralLock,
+            timingOverrideBlocked,
+            votes: normalizedVotes.map(v => ({
+              horizon: v.horizon,
+              direction: v.direction,
+              weight: Math.round(v.weight * 1000) / 1000,
+              contribution: Math.round(v.contribution * 1000) / 1000,
+            })),
+            conflictReasons,
+            resolved: { 
+              action, 
+              mode, 
+              sizeMultiplier,
+              dominantTier: dominance,
+            },
+            adaptiveMeta: { 
+              regime,
+              // BLOCK 74.3: Full adaptive weighting breakdown
+              structureWeightSum: Math.round(structureWeightSum * 100) / 100,
+              tacticalWeightSum: Math.round(tacticalWeightSum * 100) / 100,
+              timingWeightSum: Math.round(timingWeightSum * 100) / 100,
+              structuralDirection,
+              tacticalDirection,
+              timingDirection,
+              structuralDominance: structuralLock,
+              divergencePenalties,
+              phasePenalties,
+              stabilityGuard: false,
+              weightAdjustments: {
+                structureBoost: regimeMods['STRUCTURE'],
+                tacticalBoost: regimeMods['TACTICAL'],
+                timingClamp: regimeMods['TIMING'],
+              },
+            },
           };
         })(),
         structure: {
