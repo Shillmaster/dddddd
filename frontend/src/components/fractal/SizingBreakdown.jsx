@@ -5,6 +5,8 @@
  * Base × Consensus × Conflict × Risk × Volatility = Final
  * 
  * Institutional desk-style, no black boxes.
+ * 
+ * BLOCK 73.8: Added Phase Grade integration with confidence adjustment
  */
 
 import React from 'react';
@@ -13,6 +15,14 @@ const SEVERITY_COLORS = {
   OK: { bg: '#dcfce7', text: '#166534' },
   WARN: { bg: '#fef3c7', text: '#92400e' },
   CRITICAL: { bg: '#fecaca', text: '#991b1b' },
+};
+
+const GRADE_COLORS = {
+  A: { bg: '#dcfce7', text: '#166534' },
+  B: { bg: '#d1fae5', text: '#047857' },
+  C: { bg: '#fef3c7', text: '#92400e' },
+  D: { bg: '#fed7aa', text: '#c2410c' },
+  F: { bg: '#fecaca', text: '#991b1b' },
 };
 
 const FACTOR_LABELS = {
@@ -25,7 +35,7 @@ const FACTOR_LABELS = {
   TAIL_RISK: 'Tail Risk',
   RELIABILITY: 'Reliability',
   GOVERNANCE: 'Governance',
-  PHASE: 'Phase Grade',  // BLOCK 73.7
+  PHASE: 'Phase Grade',  // BLOCK 73.7/73.8
 };
 
 export function SizingBreakdown({ sizing, volatility }) {
