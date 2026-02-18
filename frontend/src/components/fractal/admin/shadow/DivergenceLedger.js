@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import { InfoTooltip, FRACTAL_TOOLTIPS } from '../InfoTooltip';
 
 export default function DivergenceLedger({ ledger, fullLedger, state, onPresetChange, onHorizonChange }) {
   const [showAll, setShowAll] = useState(false);
@@ -14,21 +15,29 @@ export default function DivergenceLedger({ ledger, fullLedger, state, onPresetCh
 
   if (!fullLedger || fullLedger.length === 0) {
     return (
-      <div style={styles.container}>
-        <h3 style={styles.title}>Divergence Ledger</h3>
+      <div style={styles.container} data-testid="divergence-ledger">
+        <div style={styles.header}>
+          <div style={styles.titleRow}>
+            <h3 style={styles.title}>Divergence Ledger</h3>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.divergenceLedger} severity="info" />
+          </div>
+        </div>
         <div style={styles.noData}>
-          No divergent decisions recorded yet.
+          Расхождения ещё не зафиксированы.
           <br />
-          <span style={styles.hint}>Divergence occurs when ACTIVE and SHADOW make different trade decisions.</span>
+          <span style={styles.hint}>Расхождение возникает, когда ACTIVE и SHADOW принимают разные торговые решения.</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} data-testid="divergence-ledger">
       <div style={styles.header}>
-        <h3 style={styles.title}>Divergence Ledger</h3>
+        <div style={styles.titleRow}>
+          <h3 style={styles.title}>Divergence Ledger</h3>
+          <InfoTooltip {...FRACTAL_TOOLTIPS.divergenceLedger} severity="info" />
+        </div>
         <div style={styles.filters}>
           <label style={styles.toggle}>
             <input
@@ -36,14 +45,14 @@ export default function DivergenceLedger({ ledger, fullLedger, state, onPresetCh
               checked={showAll}
               onChange={(e) => setShowAll(e.target.checked)}
             />
-            <span>Show all ({fullLedger.length})</span>
+            <span>Показать все ({fullLedger.length})</span>
           </label>
         </div>
       </div>
 
       {displayLedger.length === 0 ? (
         <div style={styles.noData}>
-          No divergence for {state.preset} · {state.horizonKey}
+          Нет расхождений для {state.preset} · {state.horizonKey}
         </div>
       ) : (
         <div style={styles.tableWrapper}>
@@ -112,7 +121,7 @@ export default function DivergenceLedger({ ledger, fullLedger, state, onPresetCh
 
       {displayLedger.length > 20 && (
         <div style={styles.footer}>
-          Showing 20 of {displayLedger.length} entries
+          Показано 20 из {displayLedger.length} записей
         </div>
       )}
     </div>
@@ -132,6 +141,11 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16
+  },
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8
   },
   title: {
     margin: 0,
