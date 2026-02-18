@@ -103,4 +103,4 @@ TG_ADMIN_CHAT_ID=your_chat_id
 - **Auth:** Not required (open access)
 
 ## Last Updated
-2026-02-18 — BLOCK 67-68 Regime Alert System complete
+2026-02-18 — UI/UX Improvements: Added tooltips, Russian descriptions, color-coded zones, moderator-friendly explanations
