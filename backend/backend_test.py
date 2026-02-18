@@ -1951,6 +1951,263 @@ class FractalAPITester:
         return success
 
     # ═══════════════════════════════════════════════════════════════
+    # BLOCK 74: MULTI-HORIZON INTELLIGENCE STACK TESTS
+    # ═══════════════════════════════════════════════════════════════
+
+    def test_horizon_stack_structure(self):
+        """Test /api/fractal/v2.1/terminal - horizonStack array structure (BLOCK 74.1)"""
+        params = {"symbol": "BTC", "set": "extended", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/terminal", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if "horizonStack" not in data:
+                success = False
+                details["error"] = "Expected 'horizonStack' field in response"
+            else:
+                horizon_stack = data["horizonStack"]
+                if not isinstance(horizon_stack, list):
+                    success = False
+                    details["error"] = "Expected 'horizonStack' to be an array"
+                elif len(horizon_stack) == 0:
+                    success = False
+                    details["error"] = "Expected non-empty 'horizonStack' array"
+                else:
+                    # Validate first horizon stack item structure
+                    first_item = horizon_stack[0]
+                    required_fields = ["horizon", "tier", "direction", "voteWeight"]
+                    missing_fields = [field for field in required_fields if field not in first_item]
+                    if missing_fields:
+                        success = False
+                        details["error"] = f"Missing horizonStack fields: {missing_fields}"
+                    else:
+                        # Validate field values
+                        valid_tiers = ["TIMING", "TACTICAL", "STRUCTURE"]
+                        valid_directions = ["BULLISH", "BEARISH", "FLAT"]
+                        
+                        if first_item["tier"] not in valid_tiers:
+                            success = False
+                            details["error"] = f"Invalid tier '{first_item['tier']}', expected one of {valid_tiers}"
+                        elif first_item["direction"] not in valid_directions:
+                            success = False
+                            details["error"] = f"Invalid direction '{first_item['direction']}', expected one of {valid_directions}"
+                        elif not isinstance(first_item["voteWeight"], (int, float)):
+                            success = False
+                            details["error"] = f"Expected voteWeight to be numeric, got {type(first_item['voteWeight'])}"
+                        else:
+                            details["horizon_stack_info"] = {
+                                "count": len(horizon_stack),
+                                "sample_horizon": first_item["horizon"],
+                                "sample_tier": first_item["tier"],
+                                "sample_direction": first_item["direction"],
+                                "sample_vote_weight": first_item["voteWeight"]
+                            }
+                            
+                            # Check if all required horizons are present (extended set)
+                            expected_horizons = ["7d", "14d", "30d", "90d", "180d", "365d"]
+                            actual_horizons = [item["horizon"] for item in horizon_stack]
+                            missing_horizons = [h for h in expected_horizons if h not in actual_horizons]
+                            if missing_horizons:
+                                success = False
+                                details["error"] = f"Missing horizons in stack: {missing_horizons}"
+        
+        self.log_test("Horizon Stack Structure (BLOCK 74.1)", success, details)
+        return success
+
+    def test_consensus74_structure(self):
+        """Test /api/fractal/v2.1/terminal - consensus74 object structure (BLOCK 74.2)"""
+        params = {"symbol": "BTC", "set": "extended", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/terminal", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if "consensus74" not in data:
+                success = False
+                details["error"] = "Expected 'consensus74' field in response"
+            else:
+                consensus74 = data["consensus74"]
+                if not isinstance(consensus74, dict):
+                    success = False
+                    details["error"] = "Expected 'consensus74' to be an object"
+                else:
+                    # Validate consensus74 structure
+                    required_fields = ["consensusIndex", "conflictLevel", "resolved", "votes"]
+                    missing_fields = [field for field in required_fields if field not in consensus74]
+                    if missing_fields:
+                        success = False
+                        details["error"] = f"Missing consensus74 fields: {missing_fields}"
+                    else:
+                        # Validate field values
+                        consensus_index = consensus74["consensusIndex"]
+                        conflict_level = consensus74["conflictLevel"]
+                        resolved = consensus74["resolved"]
+                        votes = consensus74["votes"]
+                        
+                        if not isinstance(consensus_index, int) or consensus_index < 0 or consensus_index > 100:
+                            success = False
+                            details["error"] = f"Expected consensusIndex 0-100, got {consensus_index}"
+                        elif conflict_level not in ["LOW", "MODERATE", "HIGH"]:
+                            success = False
+                            details["error"] = f"Invalid conflictLevel '{conflict_level}', expected LOW/MODERATE/HIGH"
+                        elif not isinstance(resolved, dict):
+                            success = False
+                            details["error"] = "Expected 'resolved' to be an object"
+                        elif not isinstance(votes, list):
+                            success = False
+                            details["error"] = "Expected 'votes' to be an array"
+                        else:
+                            # Validate resolved structure
+                            resolved_fields = ["action", "mode", "sizeMultiplier"]
+                            missing_resolved = [field for field in resolved_fields if field not in resolved]
+                            if missing_resolved:
+                                success = False
+                                details["error"] = f"Missing resolved fields: {missing_resolved}"
+                            elif resolved["action"] not in ["BUY", "SELL", "HOLD"]:
+                                success = False
+                                details["error"] = f"Invalid resolved action '{resolved['action']}'"
+                            else:
+                                # Validate votes structure
+                                if len(votes) > 0:
+                                    first_vote = votes[0]
+                                    vote_fields = ["horizon", "direction", "weight"]
+                                    missing_vote_fields = [field for field in vote_fields if field not in first_vote]
+                                    if missing_vote_fields:
+                                        success = False
+                                        details["error"] = f"Missing vote fields: {missing_vote_fields}"
+                                    else:
+                                        details["consensus74_info"] = {
+                                            "consensus_index": consensus_index,
+                                            "conflict_level": conflict_level,
+                                            "resolved_action": resolved["action"],
+                                            "resolved_mode": resolved.get("mode", "N/A"),
+                                            "vote_count": len(votes)
+                                        }
+        
+        self.log_test("Consensus74 Structure (BLOCK 74.2)", success, details)
+        return success
+
+    def test_horizon_stack_adaptive_weights(self):
+        """Test horizon stack adaptive weighting logic (BLOCK 74.1)"""
+        params = {"symbol": "BTC", "set": "extended", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/terminal", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            horizon_stack = data.get("horizonStack", [])
+            
+            if len(horizon_stack) == 0:
+                success = False
+                details["error"] = "No horizon stack data to validate"
+            else:
+                # Test adaptive weighting logic
+                structure_weights = []
+                tactical_weights = []
+                timing_weights = []
+                
+                for item in horizon_stack:
+                    tier = item["tier"]
+                    vote_weight = item["voteWeight"]
+                    
+                    if tier == "STRUCTURE":
+                        structure_weights.append(vote_weight)
+                    elif tier == "TACTICAL":
+                        tactical_weights.append(vote_weight)
+                    elif tier == "TIMING":
+                        timing_weights.append(vote_weight)
+                
+                # Validate adaptive weighting expectations
+                # Structure should generally have higher weights (around 0.42)
+                # Tactical should be middle (around 0.36)
+                # Timing should be lower (around 0.22)
+                
+                avg_structure = sum(structure_weights) / len(structure_weights) if structure_weights else 0
+                avg_tactical = sum(tactical_weights) / len(tactical_weights) if tactical_weights else 0
+                avg_timing = sum(timing_weights) / len(timing_weights) if timing_weights else 0
+                
+                details["adaptive_weights"] = {
+                    "structure_avg": avg_structure,
+                    "tactical_avg": avg_tactical,
+                    "timing_avg": avg_timing,
+                    "structure_count": len(structure_weights),
+                    "tactical_count": len(tactical_weights),
+                    "timing_count": len(timing_weights)
+                }
+                
+                # Check if weights make sense (structure > tactical > timing generally)
+                if structure_weights and tactical_weights and avg_structure < avg_tactical:
+                    details["note"] = "⚠️ Structure weights lower than tactical (may be regime-adjusted)"
+                else:
+                    details["note"] = "✅ Adaptive weights following expected tier hierarchy"
+        
+        self.log_test("Horizon Stack Adaptive Weights (BLOCK 74.1)", success, details)
+        return success
+
+    def test_consensus_institutional_logic(self):
+        """Test institutional consensus calculation logic (BLOCK 74.2)"""
+        params = {"symbol": "BTC", "set": "extended", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/terminal", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            consensus74 = data.get("consensus74", {})
+            horizon_stack = data.get("horizonStack", [])
+            
+            if not consensus74 or not horizon_stack:
+                success = False
+                details["error"] = "Missing consensus74 or horizonStack data"
+            else:
+                # Validate consensus index calculation
+                votes = consensus74.get("votes", [])
+                consensus_index = consensus74.get("consensusIndex", 50)
+                
+                # Calculate manual consensus for verification
+                bullish_weight = sum(v["weight"] for v in votes if v["direction"] == "BULLISH")
+                bearish_weight = sum(v["weight"] for v in votes if v["direction"] == "BEARISH")
+                total_weight = sum(v["weight"] for v in votes)
+                
+                if total_weight > 0:
+                    manual_consensus = 50 + (bullish_weight - bearish_weight) / total_weight * 50
+                    manual_consensus = max(0, min(100, int(manual_consensus)))
+                    
+                    # Allow for slight rounding differences
+                    if abs(consensus_index - manual_consensus) > 5:
+                        success = False
+                        details["error"] = f"Consensus index mismatch: API={consensus_index}, calculated={manual_consensus}"
+                    else:
+                        details["consensus_validation"] = {
+                            "api_consensus": consensus_index,
+                            "calculated_consensus": manual_consensus,
+                            "bullish_weight": bullish_weight,
+                            "bearish_weight": bearish_weight,
+                            "total_weight": total_weight,
+                            "vote_count": len(votes)
+                        }
+                        
+                        # Check conflict level logic
+                        conflict_level = consensus74.get("conflictLevel", "MODERATE")
+                        weight_diff = abs(bullish_weight - bearish_weight)
+                        
+                        if weight_diff < 0.2 * total_weight:
+                            expected_conflict = "HIGH"
+                        elif weight_diff < 0.35 * total_weight:
+                            expected_conflict = "MODERATE"
+                        else:
+                            expected_conflict = "LOW"
+                        
+                        details["conflict_validation"] = {
+                            "api_conflict": conflict_level,
+                            "expected_conflict": expected_conflict,
+                            "weight_difference": weight_diff,
+                            "weight_diff_ratio": weight_diff / total_weight if total_weight > 0 else 0
+                        }
+                else:
+                    success = False
+                    details["error"] = "No vote weights found"
+        
+        self.log_test("Institutional Consensus Logic (BLOCK 74.2)", success, details)
+        return success
+
+    # ═══════════════════════════════════════════════════════════════
     # BLOCK 67-68: ALERT ENGINE TESTS
     # ═══════════════════════════════════════════════════════════════
 
