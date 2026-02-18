@@ -458,8 +458,15 @@ export class PhasePerformanceService {
     
     console.log(`[PhasePerformance] Fetching candles for ${symbol} from ${fromDate.toISOString()} to ${toDate.toISOString()}`);
     
-    // Get candles for analysis
-    const candles = await this.canonicalStore.getRange(symbol, '1D', fromDate, toDate);
+    // Try canonical store first
+    let candles = await this.canonicalStore.getRange(symbol, '1D', fromDate, toDate);
+    
+    // If no candles in DB, fallback to chart API data
+    if (!candles || candles.length < 100) {
+      console.log(`[PhasePerformance] Canonical store empty, using chart API fallback`);
+      candles = await this.fetchCandlesFromChartApi(symbol, 1500);
+    }
+    
     console.log(`[PhasePerformance] Got ${candles?.length || 0} candles`);
     
     if (!candles || candles.length < 100) {
@@ -467,8 +474,12 @@ export class PhasePerformanceService {
     }
     
     // Extract closes and timestamps from canonical format
-    const closes = candles.map(c => c.ohlcv.c);
-    const timestamps = candles.map(c => c.ts.getTime());
+    // Handle both canonical format (ohlcv.c) and simple format (c)
+    const closes = candles.map((c: any) => c.ohlcv?.c ?? c.c);
+    const timestamps = candles.map((c: any) => {
+      if (c.ohlcv) return c.ts?.getTime ? c.ts.getTime() : c.ts;
+      return c.t;
+    });
     
     // Group candles by detected phase
     const phaseData: Map<PhaseType, {
