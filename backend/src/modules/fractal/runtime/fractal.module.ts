@@ -175,6 +175,9 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   // BLOCK 75.1 & 75.2 — Memory & Self-Validation Layer
   await fastify.register(memoryRoutes);
 
+  // BLOCK 75.3 & 75.4 — Attribution & Policy Governance
+  await fastify.register(attributionRoutes);
+
   // Run bootstrap in background (non-blocking)
   const bootstrap = new FractalBootstrapService();
   bootstrap.ensureBootstrapped().catch(err => {
