@@ -21,6 +21,8 @@ import { forwardEquityService } from '../strategy/forward/forward.equity.service
 import { runAlertEngine, type AlertEngineContext } from '../alerts/alert.engine.service.js';
 import { sendAlertsToTelegram } from '../alerts/alert.tg.adapter.js';
 import { getQuotaStatus } from '../alerts/alert.quota.service.js';
+import { memorySnapshotWriterService } from '../memory/snapshot/snapshot-writer.service.js';
+import { outcomeResolverService as memoryOutcomeResolverService } from '../memory/outcome/outcome-resolver.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
