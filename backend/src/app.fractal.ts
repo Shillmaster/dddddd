@@ -12,6 +12,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { connectMongo, disconnectMongo } from './db/mongoose.js';
 import { registerFractalModule } from './modules/fractal/index.js';
+import { adminAuthRoutes } from './core/admin/admin.auth.routes.js';
 
 async function main() {
   console.log('═══════════════════════════════════════════════════════════════');
