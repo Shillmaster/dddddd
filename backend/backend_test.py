@@ -2086,6 +2086,143 @@ class FractalAPITester:
         self.log_test("Consensus74 Structure (BLOCK 74.2)", success, details)
         return success
 
+    def test_block743_adaptive_weighting_hard_structural_dominance(self):
+        """Test BLOCK 74.3 - Adaptive Weighting 2.0 with Hard Structural Dominance"""
+        params = {"symbol": "BTC", "set": "extended", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/terminal", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if "consensus74" not in data:
+                success = False
+                details["error"] = "Expected 'consensus74' field in response"
+            else:
+                consensus74 = data["consensus74"]
+                
+                # ═══════════════════════════════════════════════════════════════
+                # BLOCK 74.3: Validate new required fields
+                # ═══════════════════════════════════════════════════════════════
+                
+                # 1. Check consensus74 new fields: direction, dominance, structuralLock, timingOverrideBlocked
+                required_block743_fields = ["direction", "dominance", "structuralLock", "timingOverrideBlocked"]
+                missing_consensus_fields = [field for field in required_block743_fields if field not in consensus74]
+                if missing_consensus_fields:
+                    success = False
+                    details["error"] = f"Missing BLOCK 74.3 consensus74 fields: {missing_consensus_fields}"
+                
+                # 2. Check adaptiveMeta new fields
+                if success and "adaptiveMeta" not in consensus74:
+                    success = False
+                    details["error"] = "Expected 'adaptiveMeta' field in consensus74"
+                elif success:
+                    adaptive_meta = consensus74["adaptiveMeta"]
+                    required_adaptive_fields = ["structureWeightSum", "tacticalWeightSum", "timingWeightSum", 
+                                              "structuralDirection", "tacticalDirection", "timingDirection", "weightAdjustments"]
+                    missing_adaptive_fields = [field for field in required_adaptive_fields if field not in adaptive_meta]
+                    if missing_adaptive_fields:
+                        success = False
+                        details["error"] = f"Missing BLOCK 74.3 adaptiveMeta fields: {missing_adaptive_fields}"
+                
+                # 3. Check conflictReasons array
+                if success and "conflictReasons" not in consensus74:
+                    success = False
+                    details["error"] = "Expected 'conflictReasons' array in consensus74"
+                elif success:
+                    conflict_reasons = consensus74["conflictReasons"]
+                    if not isinstance(conflict_reasons, list):
+                        success = False
+                        details["error"] = "Expected 'conflictReasons' to be an array"
+                
+                # 4. Check resolved new fields
+                if success and "resolved" in consensus74:
+                    resolved = consensus74["resolved"]
+                    required_resolved_fields = ["action", "mode", "sizeMultiplier", "dominantTier"]
+                    missing_resolved_fields = [field for field in required_resolved_fields if field not in resolved]
+                    if missing_resolved_fields:
+                        success = False
+                        details["error"] = f"Missing BLOCK 74.3 resolved fields: {missing_resolved_fields}"
+                
+                # ═══════════════════════════════════════════════════════════════
+                # BLOCK 74.3: Validate Hard Structural Dominance Logic
+                # ═══════════════════════════════════════════════════════════════
+                
+                if success:
+                    structural_lock = consensus74["structuralLock"]
+                    timing_override_blocked = consensus74["timingOverrideBlocked"]
+                    dominance = consensus74["dominance"]
+                    direction = consensus74["direction"]
+                    
+                    adaptive_meta = consensus74["adaptiveMeta"]
+                    structure_weight_sum = adaptive_meta["structureWeightSum"]
+                    tactical_weight_sum = adaptive_meta["tacticalWeightSum"]
+                    timing_weight_sum = adaptive_meta["timingWeightSum"]
+                    structural_direction = adaptive_meta["structuralDirection"]
+                    tactical_direction = adaptive_meta["tacticalDirection"]
+                    timing_direction = adaptive_meta["timingDirection"]
+                    
+                    # Validate Hard Structural Dominance Rule (55% threshold)
+                    expected_structural_lock = structure_weight_sum >= 0.55
+                    if structural_lock != expected_structural_lock:
+                        success = False
+                        details["error"] = f"Structural lock mismatch: expected {expected_structural_lock} (weight {structure_weight_sum}), got {structural_lock}"
+                    
+                    # When structural lock is active, structure should determine direction
+                    if structural_lock and direction != structural_direction:
+                        success = False
+                        details["error"] = f"With structural lock, direction should match structural direction: expected {structural_direction}, got {direction}"
+                    
+                    # Check timing override blocking
+                    if structural_lock and timing_direction != structural_direction and timing_direction != 'FLAT':
+                        expected_timing_blocked = True
+                        if timing_override_blocked != expected_timing_blocked:
+                            success = False
+                            details["error"] = f"Timing override should be blocked when timing ({timing_direction}) conflicts with structure ({structural_direction})"
+                    
+                    # Validate weight sums add up to ~1.0 (allowing for rounding)
+                    total_weight = structure_weight_sum + tactical_weight_sum + timing_weight_sum
+                    if abs(total_weight - 1.0) > 0.05:
+                        success = False
+                        details["error"] = f"Weight sums should add to ~1.0, got {total_weight:.3f}"
+                    
+                    # Validate weightAdjustments structure
+                    weight_adjustments = adaptive_meta.get("weightAdjustments", {})
+                    required_adjustment_fields = ["structureBoost", "tacticalBoost", "timingClamp"]
+                    missing_adjustment_fields = [field for field in required_adjustment_fields if field not in weight_adjustments]
+                    if missing_adjustment_fields:
+                        success = False
+                        details["error"] = f"Missing weightAdjustments fields: {missing_adjustment_fields}"
+                    
+                    # Collect BLOCK 74.3 validation results
+                    if success:
+                        details["block743_validation"] = {
+                            "structural_lock": structural_lock,
+                            "structure_weight_sum": structure_weight_sum,
+                            "dominance": dominance,
+                            "timing_override_blocked": timing_override_blocked,
+                            "direction": direction,
+                            "structural_direction": structural_direction,
+                            "tactical_direction": tactical_direction,
+                            "timing_direction": timing_direction,
+                            "weight_distribution": {
+                                "structure": f"{structure_weight_sum*100:.1f}%",
+                                "tactical": f"{tactical_weight_sum*100:.1f}%",
+                                "timing": f"{timing_weight_sum*100:.1f}%"
+                            },
+                            "conflict_reasons_count": len(consensus74["conflictReasons"]),
+                            "regime_adjustments": weight_adjustments
+                        }
+                        
+                        # Determine test outcome message
+                        if structural_lock:
+                            details["note"] = f"✅ STRUCTURAL DOMINANCE ACTIVE - Structure {structure_weight_sum*100:.0f}% controls direction ({direction})"
+                            if timing_override_blocked:
+                                details["note"] += f" | Timing ({timing_direction}) override BLOCKED"
+                        else:
+                            details["note"] = f"✅ Consensus mode - Structure {structure_weight_sum*100:.0f}% below 55% threshold"
+        
+        self.log_test("BLOCK 74.3 - Adaptive Weighting 2.0 Hard Structural Dominance", success, details)
+        return success
+
     def test_horizon_stack_adaptive_weights(self):
         """Test horizon stack adaptive weighting logic (BLOCK 74.1)"""
         params = {"symbol": "BTC", "set": "extended", "focus": "30d"}
