@@ -41,12 +41,6 @@ import {
   type VolatilityResult,
   type VolatilityApplied,
 } from '../volatility/index.js';
-import { 
-  phasePerformanceService, 
-  type Grade, 
-  type SampleQuality,
-  type PhaseType 
-} from '../admin/dashboard/phase-performance.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -78,11 +72,6 @@ interface TerminalPayload {
       phase: string;
     }>;
   };
-  // BLOCK 74.1: Horizon Stack (institutional intelligence layer)
-  horizonStack: any[];
-  // BLOCK 74.2: Institutional Consensus
-  consensus74: any;
-  // Legacy horizonMatrix for backward compatibility
   horizonMatrix: Array<{
     horizon: HorizonKey;
     tier: 'STRUCTURE' | 'TACTICAL' | 'TIMING';
@@ -102,7 +91,6 @@ interface TerminalPayload {
     phase: string;
     dominantHorizon: HorizonKey;
     explain: string[];
-  };
   };
   resolver: {
     timing: {
@@ -213,7 +201,6 @@ const canonicalStore = new CanonicalStore();
 const engine = new FractalEngine();
 const resolver = new HierarchicalResolverService();
 const volatilityService = getVolatilityRegimeService();
-const adaptiveWeightingService = getAdaptiveWeightingService();
 
 const SHORT_HORIZONS: HorizonKey[] = ['7d', '14d', '30d'];
 const EXTENDED_HORIZONS: HorizonKey[] = ['7d', '14d', '30d', '90d', '180d', '365d'];
@@ -249,127 +236,6 @@ function detectPhase(candles: any[]): string {
 function computeSMA(candles: any[], period: number): number {
   if (candles.length < period) return candles[candles.length - 1]?.close || 0;
   return candles.slice(-period).reduce((s, c) => s + c.close, 0) / period;
-}
-
-// ═══════════════════════════════════════════════════════════════
-// BLOCK 73.8: Phase Grade Integration for Decision Kernel
-// ═══════════════════════════════════════════════════════════════
-
-interface PhaseGradeResult {
-  grade: Grade;
-  sampleQuality: SampleQuality;
-  score: number;
-  avgDivergenceScore: number;
-  phase: PhaseType;
-}
-
-/**
- * Get phase performance grade for current market phase.
- * Used for phase-aware sizing in decision kernel.
- */
-async function getPhaseGradeForCurrentPhase(
-  symbol: string,
-  currentPhase: string,
-  tier: 'TIMING' | 'TACTICAL' | 'STRUCTURE'
-): Promise<PhaseGradeResult | null> {
-  try {
-    // Map tier to appropriate analysis
-    const tierMap: Record<string, 'TIMING' | 'TACTICAL' | 'STRUCTURE'> = {
-      'TIMING': 'TIMING',
-      'TACTICAL': 'TACTICAL',
-      'STRUCTURE': 'STRUCTURE'
-    };
-    
-    const result = await phasePerformanceService.aggregate({
-      symbol,
-      tier: tierMap[tier] || 'TACTICAL',
-    });
-    
-    if (!result.phases || result.phases.length === 0) {
-      return null;
-    }
-    
-    // Find grade for current phase
-    const phaseData = result.phases.find(
-      p => p.phaseType.toUpperCase() === currentPhase.toUpperCase()
-    );
-    
-    if (!phaseData) {
-      // Return worst grade if current phase not found in historical data
-      return {
-        grade: 'C' as Grade,
-        sampleQuality: 'VERY_LOW_SAMPLE' as SampleQuality,
-        score: 50,
-        avgDivergenceScore: 60,
-        phase: currentPhase as PhaseType
-      };
-    }
-    
-    return {
-      grade: phaseData.grade,
-      sampleQuality: phaseData.sampleQuality,
-      score: phaseData.score,
-      avgDivergenceScore: phaseData.avgDivergenceScore,
-      phase: phaseData.phaseType
-    };
-  } catch (err) {
-    console.log(`[Terminal] Phase grade lookup failed:`, err);
-    return null;
-  }
-}
-
-/**
- * BLOCK 73.8.2: Confidence Adjustment based on Phase Grade
- * 
- * Grade A + low divergence (< 50) → +5pp confidence boost
- * Grade B + low divergence (< 55) → +3pp confidence boost
- * Grade F → -5pp confidence penalty
- */
-function computePhaseConfidenceAdjustment(
-  phaseGrade: PhaseGradeResult | null,
-  baseConfidence: number
-): { adjustedConfidence: number; adjustmentPp: number; reason: string } {
-  if (!phaseGrade) {
-    return { adjustedConfidence: baseConfidence, adjustmentPp: 0, reason: 'NO_PHASE_DATA' };
-  }
-  
-  let adjustmentPp = 0;
-  let reason = '';
-  
-  // Grade A + low divergence → +5pp
-  if (phaseGrade.grade === 'A' && phaseGrade.avgDivergenceScore < 50) {
-    adjustmentPp = 0.05;
-    reason = 'GRADE_A_LOW_DIV_BOOST';
-  }
-  // Grade A without low divergence → +3pp
-  else if (phaseGrade.grade === 'A') {
-    adjustmentPp = 0.03;
-    reason = 'GRADE_A_BOOST';
-  }
-  // Grade B + low divergence → +3pp
-  else if (phaseGrade.grade === 'B' && phaseGrade.avgDivergenceScore < 55) {
-    adjustmentPp = 0.03;
-    reason = 'GRADE_B_LOW_DIV_BOOST';
-  }
-  // Grade B → +2pp
-  else if (phaseGrade.grade === 'B') {
-    adjustmentPp = 0.02;
-    reason = 'GRADE_B_BOOST';
-  }
-  // Grade D → -3pp
-  else if (phaseGrade.grade === 'D') {
-    adjustmentPp = -0.03;
-    reason = 'GRADE_D_PENALTY';
-  }
-  // Grade F → -5pp
-  else if (phaseGrade.grade === 'F') {
-    adjustmentPp = -0.05;
-    reason = 'GRADE_F_PENALTY';
-  }
-  
-  const adjustedConfidence = Math.max(0, Math.min(1, baseConfidence + adjustmentPp));
-  
-  return { adjustedConfidence, adjustmentPp, reason };
 }
 
 async function computeHorizonSignal(candles: any[], horizon: HorizonKey) {
@@ -612,22 +478,6 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
       const avgEntropy = horizonMatrix.reduce((s, h) => s + h.entropy, 0) / horizonMatrix.length;
       const avgTailRisk = horizonMatrix.reduce((s, h) => s + h.tailRisk, 0) / horizonMatrix.length;
 
-      // ═══════════════════════════════════════════════════════════════
-      // BLOCK 73.8: Wire Phase Grade to Decision Kernel
-      // Get phase performance grade for current market phase
-      // ═══════════════════════════════════════════════════════════════
-      const phaseGradeResult = await getPhaseGradeForCurrentPhase(
-        symbol,
-        globalPhase,
-        'TACTICAL'  // Use TACTICAL tier for default sizing decisions
-      );
-      
-      // BLOCK 73.8.2: Apply confidence adjustment based on phase grade
-      const { adjustedConfidence, adjustmentPp, reason: confAdjustReason } = computePhaseConfidenceAdjustment(
-        phaseGradeResult,
-        avgConfidence
-      );
-
       const sizingResult = computeSizingPolicy({
         preset: 'BALANCED' as PresetType,  // default preset
         consensus: consensusResult,
@@ -637,7 +487,7 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
           tailRisk: avgTailRisk,
           reliability: avgReliability,
           phaseRisk: sig30?.entropy || 0.5,
-          avgConfidence: adjustedConfidence,  // Use phase-adjusted confidence
+          avgConfidence,
         },
       });
 
@@ -661,72 +511,6 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
       // Final size after volatility adjustment
       const finalSizeAfterVol = volatilityApplied.sizeAfter;
       const finalConfAfterVol = volatilityApplied.confAfter;
-
-      // ═══════════════════════════════════════════════════════════════
-      // BLOCK 74.1 + 74.2: Build Horizon Stack + Institutional Consensus
-      // ═══════════════════════════════════════════════════════════════
-      
-      // Map volatility regime to VolRegime74 type
-      const volRegime = volatilityResult.regime as VolRegime74;
-      
-      // Get phase grades for each tier
-      const phaseGrades: Record<string, { grade: Grade; score: number; sampleQuality: SampleQuality }> = {};
-      for (const tierName of ['timing', 'tactical', 'structure']) {
-        const tierEnum = tierName.toUpperCase() as 'TIMING' | 'TACTICAL' | 'STRUCTURE';
-        try {
-          const phaseResult = await phasePerformanceService.aggregate({
-            symbol,
-            tier: tierEnum,
-          });
-          // Find current phase in results
-          const currentPhaseData = phaseResult.phases.find(
-            p => p.phaseType.toUpperCase() === globalPhase.toUpperCase()
-          );
-          if (currentPhaseData) {
-            phaseGrades[tierName] = {
-              grade: currentPhaseData.grade,
-              score: currentPhaseData.score,
-              sampleQuality: currentPhaseData.sampleQuality,
-            };
-          } else {
-            phaseGrades[tierName] = { grade: 'C' as Grade, score: 50, sampleQuality: 'OK' as SampleQuality };
-          }
-        } catch {
-          phaseGrades[tierName] = { grade: 'C' as Grade, score: 50, sampleQuality: 'OK' as SampleQuality };
-        }
-      }
-      
-      // Prepare horizon data for adaptive weighting
-      const horizonDataForStack = horizonMatrix.map(h => ({
-        horizon: h.horizon,
-        direction: h.direction,
-        confidence: h.confidence,
-        entropy: h.entropy,
-        tailRisk: h.tailRisk,
-        reliability: h.reliability,
-        blockers: h.blockers,
-        matchCount: overlayResult?.matches?.length || 0,
-        primaryMatch: overlayResult?.matches?.[0] ? {
-          id: overlayResult.matches[0].id || overlayResult.matches[0].date || 'unknown',
-          score: overlayResult.matches[0].similarity || 0,
-          return: overlayResult.matches[0].forwardReturn || 0,
-        } : null,
-      }));
-      
-      // Build horizon stack with adaptive weights
-      const horizonStack = adaptiveWeightingService.buildHorizonStack(
-        horizonDataForStack,
-        volRegime,
-        phaseGrades
-      );
-      
-      // Update phase type in stack
-      horizonStack.forEach(item => {
-        item.phase.type = globalPhase;
-      });
-      
-      // Compute institutional consensus
-      const consensus74 = adaptiveWeightingService.computeConsensus(horizonStack, volRegime);
 
       const payload: TerminalPayload = {
         meta: {
@@ -754,11 +538,6 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
             phase: m.phase || 'UNKNOWN',
           })),
         },
-        // BLOCK 74.1: Horizon Stack (institutional intelligence layer)
-        horizonStack,
-        // BLOCK 74.2: Institutional Consensus
-        consensus74,
-        // Legacy horizonMatrix for backward compatibility
         horizonMatrix,
         structure: {
           globalBias: resolved.bias.dir,
@@ -839,16 +618,6 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
             conflictMultiplier: sizingResult.conflictMultiplier,
             riskMultiplier: sizingResult.riskMultiplier,
             volatilityMultiplier: volatilityResult.policy.sizeMultiplier,
-            // BLOCK 73.8: Phase grade integration
-            phaseGrade: phaseGradeResult?.grade || null,
-            phaseSampleQuality: phaseGradeResult?.sampleQuality || null,
-            phaseScore: phaseGradeResult?.score || null,
-            confidenceAdjustment: {
-              basePp: avgConfidence,
-              adjustmentPp: adjustmentPp,
-              finalPp: adjustedConfidence,
-              reason: confAdjustReason,
-            },
             finalSize: finalSizeAfterVol,
             finalPercent: Math.round(finalSizeAfterVol * 1000) / 10,
             sizeLabel: sizeToLabel(finalSizeAfterVol),
@@ -891,20 +660,8 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
                 note: `${volatilityResult.regime} regime clamp`,
                 severity: volatilityResult.policy.sizeMultiplier >= 0.7 ? 'OK' : volatilityResult.policy.sizeMultiplier >= 0.4 ? 'WARN' : 'CRITICAL',
               },
-              // BLOCK 73.8: Phase Grade factor in breakdown
-              ...(phaseGradeResult ? [{
-                factor: 'PHASE',
-                order: 6,
-                multiplier: phaseGradeResult.grade === 'A' ? 1.15 : 
-                           phaseGradeResult.grade === 'B' ? 1.05 :
-                           phaseGradeResult.grade === 'C' ? 1.00 :
-                           phaseGradeResult.grade === 'D' ? 0.80 : 0.60,
-                note: `Phase ${globalPhase} Grade ${phaseGradeResult.grade} (score ${phaseGradeResult.score.toFixed(0)})`,
-                severity: phaseGradeResult.grade === 'A' || phaseGradeResult.grade === 'B' ? 'OK' : 
-                         phaseGradeResult.grade === 'C' ? 'WARN' : 'CRITICAL',
-              }] : []),
             ],
-            formula: `${sizingResult.baseSize.toFixed(2)} × ${sizingResult.consensusMultiplier.toFixed(2)} × ${sizingResult.conflictMultiplier.toFixed(2)} × ${sizingResult.riskMultiplier.toFixed(2)} × ${volatilityResult.policy.sizeMultiplier.toFixed(2)}${phaseGradeResult ? ` × Phase(${phaseGradeResult.grade})` : ''}`,
+            formula: `${sizingResult.baseSize.toFixed(2)} × ${sizingResult.consensusMultiplier.toFixed(2)} × ${sizingResult.conflictMultiplier.toFixed(2)} × ${sizingResult.riskMultiplier.toFixed(2)} × ${volatilityResult.policy.sizeMultiplier.toFixed(2)}`,
           },
         },
         // P1.4: Volatility Regime
