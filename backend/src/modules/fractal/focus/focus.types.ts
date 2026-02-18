@@ -79,6 +79,7 @@ export interface OverlayPack {
 
 export interface ForecastPack {
   path: number[];              // Central trajectory (p50 or weighted)
+  pricePath?: number[];        // Alias for path (compatibility)
   upperBand: number[];         // Upper confidence band
   lowerBand: number[];         // Lower confidence band
   confidenceDecay: number[];   // 1 → 0 fade over horizon
@@ -96,6 +97,15 @@ export interface ForecastPack {
   // Current reference
   currentPrice: number;
   startTs: number;
+  
+  // BLOCK 73.3: Unified path for frontend
+  unifiedPath?: {
+    anchorPrice: number;
+    horizonDays: number;
+    syntheticPath: Array<{ t: number; price: number; pct: number }>;
+    replayPath: Array<{ t: number; price: number; pct: number }> | null;
+    markers: Record<string, { horizon: string; t: number; price: number; pct: number }>;
+  };
 }
 
 export interface FocusPackDiagnostics {
