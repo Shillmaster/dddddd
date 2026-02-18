@@ -1,6 +1,7 @@
 /**
- * BLOCK 50 — Playbook Card (Improved UI)
- * Shows recommended action and apply button with better UX
+ * BLOCK 50 — Playbook Card
+ * English: titles, status badges, action names
+ * Russian: only in tooltips
  */
 
 import React, { useState } from 'react';
@@ -22,53 +23,47 @@ const playbookConfig = {
     bg: 'bg-gray-50', 
     border: 'border-gray-200', 
     badge: 'bg-gray-100 text-gray-600',
-    icon: CheckCircle,
-    description: 'Система работает нормально, действия не требуются'
+    icon: CheckCircle
   },
   INVESTIGATION: { 
     bg: 'bg-blue-50', 
     border: 'border-blue-200', 
     badge: 'bg-blue-100 text-blue-700',
-    icon: RefreshCw,
-    description: 'Рекомендуется провести анализ текущей ситуации'
+    icon: RefreshCw
   },
   PROTECTION_ESCALATION: { 
     bg: 'bg-amber-50', 
     border: 'border-amber-300', 
     badge: 'bg-amber-100 text-amber-700',
-    icon: Shield,
-    description: 'Активация защитного режима для снижения риска'
+    icon: Shield
   },
   RECALIBRATION: { 
     bg: 'bg-purple-50', 
     border: 'border-purple-200', 
     badge: 'bg-purple-100 text-purple-700',
-    icon: RefreshCw,
-    description: 'Требуется перекалибровка параметров системы'
+    icon: RefreshCw
   },
   RECOVERY: { 
     bg: 'bg-green-50', 
     border: 'border-green-200', 
     badge: 'bg-green-100 text-green-700',
-    icon: Play,
-    description: 'Возможно восстановление нормального режима работы'
+    icon: Play
   },
   FREEZE_ONLY: { 
     bg: 'bg-red-50', 
     border: 'border-red-300', 
     badge: 'bg-red-100 text-red-700',
-    icon: Pause,
-    description: 'Критическая ситуация — только удержание текущих позиций'
+    icon: Pause
   },
 };
 
 const priorityConfig = {
-  1: { label: 'CRITICAL', color: 'bg-red-100 text-red-700', description: 'Требует немедленного действия' },
-  2: { label: 'HIGH', color: 'bg-orange-100 text-orange-700', description: 'Высокий приоритет' },
-  3: { label: 'MEDIUM', color: 'bg-amber-100 text-amber-700', description: 'Средний приоритет' },
-  4: { label: 'LOW', color: 'bg-blue-100 text-blue-700', description: 'Низкий приоритет' },
-  5: { label: 'INFO', color: 'bg-gray-100 text-gray-600', description: 'Информационный' },
-  6: { label: 'NONE', color: 'bg-gray-100 text-gray-500', description: 'Действия не требуются' },
+  1: { label: 'CRITICAL', color: 'bg-red-100 text-red-700' },
+  2: { label: 'HIGH', color: 'bg-orange-100 text-orange-700' },
+  3: { label: 'MEDIUM', color: 'bg-amber-100 text-amber-700' },
+  4: { label: 'LOW', color: 'bg-blue-100 text-blue-700' },
+  5: { label: 'INFO', color: 'bg-gray-100 text-gray-600' },
+  6: { label: 'NONE', color: 'bg-gray-100 text-gray-500' },
 };
 
 export function PlaybookCard({ recommendation, onApply }) {
@@ -106,7 +101,7 @@ export function PlaybookCard({ recommendation, onApply }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Playbook</h3>
+          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">PLAYBOOK</h3>
           <InfoTooltip {...FRACTAL_TOOLTIPS.playbook} placement="right" />
         </div>
         <div className={`px-3 py-1.5 rounded-full text-xs font-bold ${priority.color}`}>
@@ -120,7 +115,6 @@ export function PlaybookCard({ recommendation, onApply }) {
           <PlaybookIcon className="w-6 h-6" />
           <span className="text-lg font-bold">{recommendation.playbook.replace(/_/g, ' ')}</span>
         </div>
-        <p className="mt-3 text-sm text-gray-600">{config.description}</p>
       </div>
       
       {/* Reasons */}
@@ -130,7 +124,7 @@ export function PlaybookCard({ recommendation, onApply }) {
             onClick={() => setExpanded(!expanded)}
             className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase tracking-wide hover:text-gray-700 transition-colors"
           >
-            Причины ({recommendation.reasonCodes.length})
+            Reasons ({recommendation.reasonCodes.length})
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
           
@@ -153,7 +147,7 @@ export function PlaybookCard({ recommendation, onApply }) {
       {/* Suggested Actions */}
       {recommendation.suggestedActions?.length > 0 && (
         <div className="mb-5">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Рекомендуемые действия</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">SUGGESTED ACTIONS</p>
           <div className="space-y-2">
             {recommendation.suggestedActions.map((action, i) => (
               <div 
@@ -178,7 +172,7 @@ export function PlaybookCard({ recommendation, onApply }) {
               <div className="p-3 bg-amber-100 rounded-xl">
                 <p className="text-sm text-amber-800 font-medium flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
-                  Вы уверены, что хотите применить этот playbook?
+                  Confirm applying this playbook?
                 </p>
               </div>
               <div className="flex gap-3">
@@ -190,12 +184,12 @@ export function PlaybookCard({ recommendation, onApply }) {
                   {applying ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      Применение...
+                      Applying...
                     </>
                   ) : (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      Подтвердить
+                      Confirm
                     </>
                   )}
                 </button>
@@ -203,7 +197,7 @@ export function PlaybookCard({ recommendation, onApply }) {
                   onClick={() => setShowConfirm(false)}
                   className="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-300 transition-colors"
                 >
-                  Отмена
+                  Cancel
                 </button>
               </div>
             </div>
@@ -213,7 +207,7 @@ export function PlaybookCard({ recommendation, onApply }) {
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
             >
               <Play className="w-5 h-5" />
-              Применить рекомендацию
+              Apply Recommendation
             </button>
           )}
         </div>
