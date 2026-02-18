@@ -32,6 +32,7 @@ import { registerFreezeRoutes } from '../freeze/fractal.freeze.routes.js';
 import { FractalBootstrapService } from '../bootstrap/fractal.bootstrap.service.js';
 import { guardRoutes, playbookRoutes } from '../governance/index.js';
 import { adminOverviewRoutes } from '../admin/dashboard/index.js';
+import { phasePerformanceRoutes } from '../admin/dashboard/phase-performance.routes.js';
 import { fractalMultiSignalRoutes } from '../api/fractal.multi-signal.routes.js';
 import { fractalRegimeRoutes } from '../api/fractal.regime.routes.js';
 import { fractalTerminalRoutes } from '../api/fractal.terminal.routes.js';
