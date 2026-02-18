@@ -244,6 +244,127 @@ function computeSMA(candles: any[], period: number): number {
   return candles.slice(-period).reduce((s, c) => s + c.close, 0) / period;
 }
 
+// ═══════════════════════════════════════════════════════════════
+// BLOCK 73.8: Phase Grade Integration for Decision Kernel
+// ═══════════════════════════════════════════════════════════════
+
+interface PhaseGradeResult {
+  grade: Grade;
+  sampleQuality: SampleQuality;
+  score: number;
+  avgDivergenceScore: number;
+  phase: PhaseType;
+}
+
+/**
+ * Get phase performance grade for current market phase.
+ * Used for phase-aware sizing in decision kernel.
+ */
+async function getPhaseGradeForCurrentPhase(
+  symbol: string,
+  currentPhase: string,
+  tier: 'TIMING' | 'TACTICAL' | 'STRUCTURE'
+): Promise<PhaseGradeResult | null> {
+  try {
+    // Map tier to appropriate analysis
+    const tierMap: Record<string, 'TIMING' | 'TACTICAL' | 'STRUCTURE'> = {
+      'TIMING': 'TIMING',
+      'TACTICAL': 'TACTICAL',
+      'STRUCTURE': 'STRUCTURE'
+    };
+    
+    const result = await phasePerformanceService.aggregate({
+      symbol,
+      tier: tierMap[tier] || 'TACTICAL',
+    });
+    
+    if (!result.phases || result.phases.length === 0) {
+      return null;
+    }
+    
+    // Find grade for current phase
+    const phaseData = result.phases.find(
+      p => p.phaseType.toUpperCase() === currentPhase.toUpperCase()
+    );
+    
+    if (!phaseData) {
+      // Return worst grade if current phase not found in historical data
+      return {
+        grade: 'C' as Grade,
+        sampleQuality: 'VERY_LOW_SAMPLE' as SampleQuality,
+        score: 50,
+        avgDivergenceScore: 60,
+        phase: currentPhase as PhaseType
+      };
+    }
+    
+    return {
+      grade: phaseData.grade,
+      sampleQuality: phaseData.sampleQuality,
+      score: phaseData.score,
+      avgDivergenceScore: phaseData.avgDivergenceScore,
+      phase: phaseData.phaseType
+    };
+  } catch (err) {
+    console.log(`[Terminal] Phase grade lookup failed:`, err);
+    return null;
+  }
+}
+
+/**
+ * BLOCK 73.8.2: Confidence Adjustment based on Phase Grade
+ * 
+ * Grade A + low divergence (< 50) → +5pp confidence boost
+ * Grade B + low divergence (< 55) → +3pp confidence boost
+ * Grade F → -5pp confidence penalty
+ */
+function computePhaseConfidenceAdjustment(
+  phaseGrade: PhaseGradeResult | null,
+  baseConfidence: number
+): { adjustedConfidence: number; adjustmentPp: number; reason: string } {
+  if (!phaseGrade) {
+    return { adjustedConfidence: baseConfidence, adjustmentPp: 0, reason: 'NO_PHASE_DATA' };
+  }
+  
+  let adjustmentPp = 0;
+  let reason = '';
+  
+  // Grade A + low divergence → +5pp
+  if (phaseGrade.grade === 'A' && phaseGrade.avgDivergenceScore < 50) {
+    adjustmentPp = 0.05;
+    reason = 'GRADE_A_LOW_DIV_BOOST';
+  }
+  // Grade A without low divergence → +3pp
+  else if (phaseGrade.grade === 'A') {
+    adjustmentPp = 0.03;
+    reason = 'GRADE_A_BOOST';
+  }
+  // Grade B + low divergence → +3pp
+  else if (phaseGrade.grade === 'B' && phaseGrade.avgDivergenceScore < 55) {
+    adjustmentPp = 0.03;
+    reason = 'GRADE_B_LOW_DIV_BOOST';
+  }
+  // Grade B → +2pp
+  else if (phaseGrade.grade === 'B') {
+    adjustmentPp = 0.02;
+    reason = 'GRADE_B_BOOST';
+  }
+  // Grade D → -3pp
+  else if (phaseGrade.grade === 'D') {
+    adjustmentPp = -0.03;
+    reason = 'GRADE_D_PENALTY';
+  }
+  // Grade F → -5pp
+  else if (phaseGrade.grade === 'F') {
+    adjustmentPp = -0.05;
+    reason = 'GRADE_F_PENALTY';
+  }
+  
+  const adjustedConfidence = Math.max(0, Math.min(1, baseConfidence + adjustmentPp));
+  
+  return { adjustedConfidence, adjustmentPp, reason };
+}
+
 async function computeHorizonSignal(candles: any[], horizon: HorizonKey) {
   const config = HORIZON_CONFIG[horizon];
   const phase = detectPhase(candles);
