@@ -136,6 +136,7 @@ export function FractalHybridChart({
         focus={focus}
         mode="hybrid"
         primaryMatch={primaryMatch}
+        normalizedSeries={focusPack?.normalizedSeries}
         width={width} 
         height={height} 
       />
