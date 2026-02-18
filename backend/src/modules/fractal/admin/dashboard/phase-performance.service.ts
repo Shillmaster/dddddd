@@ -554,8 +554,8 @@ export class PhasePerformanceService {
     // Calculate global stats
     const globalStats = this.calcStats(allReturns, allDates);
     
-    // Calculate per-phase stats
-    const phases = this.buildPhaseStats(phaseData, now);
+    // Calculate per-phase stats with tier-aware scoring
+    const phases = this.buildPhaseStats(phaseData, now, tier);
     
     // Global warnings
     const warnings: string[] = [];
