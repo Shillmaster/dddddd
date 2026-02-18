@@ -263,12 +263,21 @@ export class PhasePerformanceService {
       const { KrakenCsvProvider } = await import('../../data/providers/kraken-csv.provider.js');
       const provider = new KrakenCsvProvider();
       
-      // Try to get candles from CSV
-      const candles = await provider.getOhlcv(symbol, '1D', limit);
+      // Check if bootstrap file exists
+      if (!provider.hasBootstrapFile()) {
+        console.log(`[PhasePerformance] No bootstrap CSV file found`);
+        return [];
+      }
+      
+      // Get all candles from CSV
+      const candles = await provider.fetchAll();
       if (candles && candles.length > 0) {
-        console.log(`[PhasePerformance] Got ${candles.length} candles from CSV provider`);
-        this.candleCache = candles;
-        return candles;
+        // Sort by timestamp and take last N
+        candles.sort((a, b) => a.t - b.t);
+        const result = candles.slice(-limit);
+        console.log(`[PhasePerformance] Got ${result.length} candles from CSV provider`);
+        this.candleCache = result;
+        return result;
       }
     } catch (err) {
       console.log(`[PhasePerformance] CSV provider error:`, err);
