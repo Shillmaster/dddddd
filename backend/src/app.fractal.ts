@@ -51,6 +51,11 @@ async function main() {
   await registerFractalModule(app);
   console.log('[Fractal] ✅ Fractal Module registered');
   
+  // Register Admin Auth routes
+  console.log('[Fractal] Registering Admin Auth...');
+  await app.register(adminAuthRoutes, { prefix: '/api/admin' });
+  console.log('[Fractal] ✅ Admin Auth registered');
+  
   // Graceful shutdown
   const shutdown = async (signal: string) => {
     console.log(`[Fractal] Received ${signal}, shutting down...`);
