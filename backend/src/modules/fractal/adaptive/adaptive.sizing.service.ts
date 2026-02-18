@@ -304,6 +304,7 @@ export class AdaptiveSizingService {
       tailRiskMod: 0,
       reliabilityMod: 0,
       governanceMod: 0,
+      phaseMod: 1.0,  // BLOCK 73.7: neutral for blocked trades
       sizeBeforeVol: 0,
       finalSize: 0,
     };
