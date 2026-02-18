@@ -248,6 +248,34 @@ function detectPhaseSimple(closes: number[]): PhaseType {
 
 export class PhasePerformanceService {
   private canonicalStore = new CanonicalStore();
+  private candleCache: any[] | null = null;
+  
+  /**
+   * Fetch candles from chart API (fallback when canonical store is empty)
+   */
+  private async fetchCandlesFromChartApi(symbol: string, limit: number = 1500): Promise<any[]> {
+    if (this.candleCache) {
+      return this.candleCache;
+    }
+    
+    try {
+      // Import the data providers
+      const { KrakenCsvProvider } = await import('../../data/providers/kraken-csv.provider.js');
+      const provider = new KrakenCsvProvider();
+      
+      // Try to get candles from CSV
+      const candles = await provider.getOhlcv(symbol, '1D', limit);
+      if (candles && candles.length > 0) {
+        console.log(`[PhasePerformance] Got ${candles.length} candles from CSV provider`);
+        this.candleCache = candles;
+        return candles;
+      }
+    } catch (err) {
+      console.log(`[PhasePerformance] CSV provider error:`, err);
+    }
+    
+    return [];
+  }
   
   /**
    * Get phase for a given date from price data
