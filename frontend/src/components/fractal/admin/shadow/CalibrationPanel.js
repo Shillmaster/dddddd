@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { InfoTooltip, FRACTAL_TOOLTIPS } from '../InfoTooltip';
 
 export default function CalibrationPanel({ calibration, state }) {
   const active = calibration?.active || {};
@@ -27,15 +28,18 @@ export default function CalibrationPanel({ calibration, state }) {
   const noData = !active.ece && !shadow.ece;
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} data-testid="calibration-panel">
       <div style={styles.header}>
-        <h3 style={styles.title}>Calibration Delta</h3>
+        <div style={styles.titleRow}>
+          <h3 style={styles.title}>Calibration Delta</h3>
+          <InfoTooltip {...FRACTAL_TOOLTIPS.calibration} severity="warning" />
+        </div>
         <span style={styles.subtitle}>{state.preset} · {state.horizonKey}</span>
       </div>
 
       {noData ? (
         <div style={styles.noData}>
-          No calibration data available yet
+          Данные калибровки пока недоступны
         </div>
       ) : (
         <>
@@ -43,6 +47,7 @@ export default function CalibrationPanel({ calibration, state }) {
             {/* ECE Card */}
             <div style={styles.card}>
               <span style={styles.cardLabel}>Expected Calibration Error (ECE)</span>
+              <p style={styles.cardHint}>Насколько уверенность модели соответствует реальным результатам</p>
               <div style={styles.cardRow}>
                 <div style={styles.valueBlock}>
                   <span style={styles.roleLabel}>ACTIVE</span>
@@ -62,12 +67,13 @@ export default function CalibrationPanel({ calibration, state }) {
                   </span>
                 </div>
               </div>
-              <p style={styles.hint}>Lower is better (more calibrated)</p>
+              <p style={styles.hint}>Меньше — лучше (модель калиброванее)</p>
             </div>
 
             {/* Brier Card */}
             <div style={styles.card}>
               <span style={styles.cardLabel}>Brier Score</span>
+              <p style={styles.cardHint}>Точность вероятностных прогнозов</p>
               <div style={styles.cardRow}>
                 <div style={styles.valueBlock}>
                   <span style={styles.roleLabel}>ACTIVE</span>
@@ -87,7 +93,7 @@ export default function CalibrationPanel({ calibration, state }) {
                   </span>
                 </div>
               </div>
-              <p style={styles.hint}>Lower is better (more accurate probability)</p>
+              <p style={styles.hint}>Меньше — лучше (точнее вероятности)</p>
             </div>
           </div>
 
@@ -95,11 +101,12 @@ export default function CalibrationPanel({ calibration, state }) {
           {calibrationWarning && (
             <div style={styles.warning}>
               <span style={styles.warningIcon}>⚠️</span>
-              <span>
-                <strong>Calibration Degraded:</strong> Shadow may show better performance metrics
-                but has worse probability calibration. This could indicate overfitting or
-                confidence bias. Investigate before promotion.
-              </span>
+              <div>
+                <strong>Калибровка ухудшилась:</strong> Shadow может показывать лучшие метрики производительности,
+                но хуже калибрует вероятности. Это может указывать на overfitting или чрезмерную уверенность.
+                <br />
+                <span style={styles.warningAction}>Рекомендация: проведите дополнительный анализ перед promotion.</span>
+              </div>
             </div>
           )}
         </>
@@ -121,6 +128,11 @@ const styles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16
+  },
+  titleRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8
   },
   title: {
     margin: 0,
@@ -154,7 +166,12 @@ const styles = {
     fontSize: 12,
     fontWeight: 500,
     color: '#374151',
-    marginBottom: 12
+    marginBottom: 4
+  },
+  cardHint: {
+    margin: '0 0 12px 0',
+    fontSize: 11,
+    color: '#94a3b8'
   },
   cardRow: {
     display: 'flex',
@@ -200,6 +217,13 @@ const styles = {
     color: '#92400e'
   },
   warningIcon: {
-    fontSize: 16
+    fontSize: 16,
+    flexShrink: 0
+  },
+  warningAction: {
+    display: 'block',
+    marginTop: 8,
+    fontWeight: 500,
+    color: '#78350f'
   }
 };
