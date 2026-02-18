@@ -525,10 +525,53 @@ const styles = {
     color: '#6b7280',
     marginBottom: '4px',
   },
+  // BLOCK 74.3: Tier Weight Distribution
+  tierWeightsSection: {
+    marginBottom: '16px',
+  },
+  tierWeightsGrid: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+  },
+  tierWeightItem: {
+    display: 'grid',
+    gridTemplateColumns: '70px 1fr 40px 24px',
+    gap: '8px',
+    alignItems: 'center',
+  },
+  tierWeightLabel: {
+    fontSize: '10px',
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  tierWeightBarContainer: {
+    height: '10px',
+    backgroundColor: '#f3f4f6',
+    borderRadius: '5px',
+    overflow: 'hidden',
+  },
+  tierWeightBar: {
+    height: '100%',
+    borderRadius: '5px',
+    transition: 'width 0.3s',
+  },
+  tierWeightValue: {
+    fontSize: '11px',
+    fontWeight: '600',
+    color: '#374151',
+    textAlign: 'right',
+    fontFamily: 'ui-monospace, monospace',
+  },
+  tierDirection: {
+    fontSize: '16px',
+    fontWeight: '700',
+    textAlign: 'center',
+  },
   metaSection: {},
   metaGrid: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
+    gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '8px',
   },
   metaItem: {
@@ -546,6 +589,26 @@ const styles = {
     fontSize: '10px',
     fontWeight: '600',
     color: '#374151',
+  },
+  // BLOCK 74.3: Regime Impact
+  regimeImpact: {
+    marginTop: '12px',
+    padding: '8px 12px',
+    backgroundColor: '#fef3c7',
+    borderRadius: '6px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  },
+  regimeImpactLabel: {
+    fontSize: '10px',
+    fontWeight: '600',
+    color: '#92400e',
+  },
+  regimeImpactValues: {
+    fontSize: '10px',
+    color: '#78350f',
+    fontFamily: 'ui-monospace, monospace',
   },
 };
 
