@@ -22,8 +22,10 @@ import {
   OverlayMatch,
   DistributionSeries,
   FocusPackDiagnostics,
+  PrimarySelection,
   getFocusTier,
 } from './focus.types.js';
+import { selectPrimaryMatch } from '../match/primary-selector.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // FOCUS PACK BUILDER
