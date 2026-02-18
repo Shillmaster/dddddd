@@ -605,6 +605,22 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
       const avgEntropy = horizonMatrix.reduce((s, h) => s + h.entropy, 0) / horizonMatrix.length;
       const avgTailRisk = horizonMatrix.reduce((s, h) => s + h.tailRisk, 0) / horizonMatrix.length;
 
+      // ═══════════════════════════════════════════════════════════════
+      // BLOCK 73.8: Wire Phase Grade to Decision Kernel
+      // Get phase performance grade for current market phase
+      // ═══════════════════════════════════════════════════════════════
+      const phaseGradeResult = await getPhaseGradeForCurrentPhase(
+        symbol,
+        globalPhase,
+        'TACTICAL'  // Use TACTICAL tier for default sizing decisions
+      );
+      
+      // BLOCK 73.8.2: Apply confidence adjustment based on phase grade
+      const { adjustedConfidence, adjustmentPp, reason: confAdjustReason } = computePhaseConfidenceAdjustment(
+        phaseGradeResult,
+        avgConfidence
+      );
+
       const sizingResult = computeSizingPolicy({
         preset: 'BALANCED' as PresetType,  // default preset
         consensus: consensusResult,
@@ -614,7 +630,7 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
           tailRisk: avgTailRisk,
           reliability: avgReliability,
           phaseRisk: sig30?.entropy || 0.5,
-          avgConfidence,
+          avgConfidence: adjustedConfidence,  // Use phase-adjusted confidence
         },
       });
 
