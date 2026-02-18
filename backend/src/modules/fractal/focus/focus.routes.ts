@@ -214,4 +214,108 @@ export async function focusPackRoutes(fastify: FastifyInstance): Promise<void> {
   });
   
   fastify.log.info('[Fractal] BLOCK 70.2: FocusPack routes registered');
+  
+  // ═══════════════════════════════════════════════════════════════
+  // BLOCK 73.4 — Interactive Match Replay
+  // ═══════════════════════════════════════════════════════════════
+  
+  /**
+   * GET /api/fractal/v2.1/replay-pack
+   * 
+   * Returns replay data for a specific historical match.
+   * Used when user clicks on a match chip in the UI.
+   */
+  fastify.get('/api/fractal/v2.1/replay-pack', async (
+    req: FastifyRequest<{ 
+      Querystring: { 
+        symbol?: string; 
+        focus?: string;
+        matchId?: string;
+      } 
+    }>,
+    reply
+  ) => {
+    const symbol = String(req.query.symbol ?? 'BTC').toUpperCase();
+    const focusRaw = req.query.focus || '30d';
+    const matchId = req.query.matchId;
+    
+    // Validate
+    if (symbol !== 'BTC') {
+      return reply.code(400).send({ error: 'BTC_ONLY' });
+    }
+    
+    if (!isValidHorizon(focusRaw)) {
+      return reply.code(400).send({ 
+        error: 'INVALID_HORIZON',
+        message: `Invalid focus: ${focusRaw}`
+      });
+    }
+    
+    if (!matchId) {
+      return reply.code(400).send({ 
+        error: 'MATCH_ID_REQUIRED',
+        message: 'matchId query parameter is required'
+      });
+    }
+    
+    const focus = focusRaw as HorizonKey;
+    
+    try {
+      const t0 = Date.now();
+      
+      // Get full focus pack first
+      const focusPack = await buildFocusPack(symbol, focus);
+      
+      // Find the requested match
+      const match = focusPack.overlay.matches.find(m => m.id === matchId);
+      
+      if (!match) {
+        return reply.code(404).send({
+          error: 'MATCH_NOT_FOUND',
+          message: `Match ${matchId} not found in ${focus} overlay`,
+          availableMatches: focusPack.overlay.matches.map(m => m.id)
+        });
+      }
+      
+      // Get unified path from forecast
+      const unifiedPath = (focusPack.forecast as any).unifiedPath;
+      if (!unifiedPath?.syntheticPath) {
+        return reply.code(500).send({
+          error: 'NO_UNIFIED_PATH',
+          message: 'UnifiedPath not available in focusPack'
+        });
+      }
+      
+      // Build replay pack for this match
+      const replayPack = buildReplayPack(
+        match,
+        unifiedPath.syntheticPath,
+        unifiedPath.anchorPrice,
+        HORIZON_CONFIG[focus].aftermathDays,
+        focusPack.meta.tier
+      );
+      
+      const durationMs = Date.now() - t0;
+      
+      return reply.send({
+        ok: true,
+        durationMs,
+        replayPack,
+        // Include synthetic for comparison
+        synthetic: {
+          path: unifiedPath.syntheticPath,
+          markers: unifiedPath.markers
+        }
+      });
+      
+    } catch (err: any) {
+      fastify.log.error({ err: err.message, matchId, focus }, '[ReplayPack] Error');
+      return reply.code(500).send({ 
+        error: 'BUILD_ERROR',
+        message: err.message 
+      });
+    }
+  });
+  
+  fastify.log.info('[Fractal] BLOCK 73.4: ReplayPack route registered');
 }
