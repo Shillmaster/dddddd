@@ -59,6 +59,11 @@ export function buildDailyReport(s: DailyRunSummary): string {
       ].join(' | ')
     : 'Forward: accumulating...';
 
+  // Build alerts line
+  const alertsLine = s.alerts
+    ? `Alerts: sent <b>${s.alerts.sent}</b> | blocked <b>${s.alerts.blocked}</b> | quota <b>${s.alerts.quotaUsed}/${s.alerts.quotaMax}</b>`
+    : 'Alerts: —';
+
   return [
     `${healthEmoji} <b>FRACTAL DAILY</b> — ${s.symbol}`,
     ``,
@@ -70,6 +75,7 @@ export function buildDailyReport(s: DailyRunSummary): string {
     `WRITE: ${badgeOk(st.write?.success)} (${st.write?.written || 0}/${st.write?.skipped || 0})`,
     `RESOLVE: ${badgeOk(st.resolve?.success)} (${st.resolve?.resolved || 0})`,
     `REBUILD: ${badgeOk(st.rebuild?.success)} | AUDIT: ${badgeOk(st.audit?.success)}`,
+    alertsLine,
     ``,
     `<b>Forward Truth</b>`,
     forward,
