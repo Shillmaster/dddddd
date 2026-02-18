@@ -108,6 +108,39 @@ export interface FocusPackDiagnostics {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// BLOCK 73.1.1 — NORMALIZED SERIES (STRUCTURE % MODE)
+// ═══════════════════════════════════════════════════════════════
+
+export type AxisMode = 'RAW' | 'PERCENT';
+
+export interface NormalizedSeries {
+  mode: AxisMode;              // RAW for TIMING/TACTICAL, PERCENT for STRUCTURE
+  basePrice: number;           // Reference price (NOW)
+  
+  // Forecast path in both formats
+  rawPath: number[];           // Raw price values
+  percentPath: number[];       // % from NOW: ((value / now) - 1) * 100
+  
+  // Bands
+  rawUpperBand: number[];
+  rawLowerBand: number[];
+  percentUpperBand: number[];
+  percentLowerBand: number[];
+  
+  // Replay (primary match aftermath)
+  rawReplay: number[];
+  percentReplay: number[];
+  
+  // Y-axis range (computed for proper scaling)
+  yRange: {
+    minPercent: number;
+    maxPercent: number;
+    minPrice: number;
+    maxPrice: number;
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
 // PRIMARY MATCH (BLOCK 73.1)
 // ═══════════════════════════════════════════════════════════════
 
