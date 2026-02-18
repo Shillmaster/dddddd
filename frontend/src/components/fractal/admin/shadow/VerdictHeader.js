@@ -43,7 +43,7 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
               Updated: {lastFetch.toLocaleTimeString()}
             </span>
           )}
-          <button onClick={onRefresh} style={styles.refreshButton} title="Refresh">
+          <button onClick={onRefresh} style={styles.refreshButton} title="Refresh" data-testid="refresh-btn">
             ↻
           </button>
         </div>
@@ -52,8 +52,11 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
       {/* Cards Row */}
       <div style={styles.cardsGrid}>
         {/* Verdict Card */}
-        <div style={styles.card}>
-          <span style={styles.cardLabel}>Verdict</span>
+        <div style={styles.card} data-testid="verdict-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.cardLabel}>Verdict</span>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.shadowVerdict} severity="info" />
+          </div>
           <div style={{
             ...styles.verdictBadge,
             backgroundColor: verdictConfig.bg,
@@ -64,24 +67,30 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
         </div>
 
         {/* Resolved Progress */}
-        <div style={styles.card}>
-          <span style={styles.cardLabel}>Resolved Signals</span>
+        <div style={styles.card} data-testid="resolved-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.cardLabel}>Resolved Signals</span>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.resolvedSignals} severity="info" />
+          </div>
           <div style={styles.progressRow}>
             <span style={styles.progressText}>{resolved} / {minRequired}</span>
           </div>
           <div style={styles.progressBar}>
-            <div style={{ ...styles.progressFill, width: `${progress}%` }} />
+            <div style={{ ...styles.progressFill, width: `${progress}%`, backgroundColor: progress >= 100 ? '#22c55e' : '#3b82f6' }} />
           </div>
           {resolved < minRequired && (
             <span style={styles.progressHint}>
-              {minRequired - resolved} more needed
+              ещё {minRequired - resolved} для вердикта
             </span>
           )}
         </div>
 
         {/* Shadow Score */}
-        <div style={styles.card}>
-          <span style={styles.cardLabel}>Shadow Score</span>
+        <div style={styles.card} data-testid="score-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.cardLabel}>Shadow Score</span>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.shadowScore} severity="info" />
+          </div>
           <span style={{
             ...styles.scoreValue,
             color: score >= 65 ? '#22c55e' : score >= 50 ? '#f59e0b' : '#ef4444'
@@ -91,8 +100,11 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
         </div>
 
         {/* Delta Sharpe */}
-        <div style={styles.card}>
-          <span style={styles.cardLabel}>ΔSharpe</span>
+        <div style={styles.card} data-testid="sharpe-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.cardLabel}>ΔSharpe</span>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.deltaSharpe} severity="info" />
+          </div>
           <span style={{
             ...styles.deltaValue,
             color: deltaSharpe > 0.1 ? '#22c55e' : deltaSharpe < -0.1 ? '#ef4444' : '#64748b'
@@ -102,8 +114,11 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
         </div>
 
         {/* Delta MaxDD */}
-        <div style={styles.card}>
-          <span style={styles.cardLabel}>ΔMaxDD</span>
+        <div style={styles.card} data-testid="maxdd-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.cardLabel}>ΔMaxDD</span>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.deltaMaxDD} severity="warning" />
+          </div>
           <span style={{
             ...styles.deltaValue,
             color: deltaMaxDD < -2 ? '#22c55e' : deltaMaxDD > 2 ? '#ef4444' : '#64748b'
@@ -113,8 +128,11 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
         </div>
 
         {/* Delta CAGR */}
-        <div style={styles.card}>
-          <span style={styles.cardLabel}>ΔCAGR</span>
+        <div style={styles.card} data-testid="cagr-card">
+          <div style={styles.cardHeader}>
+            <span style={styles.cardLabel}>ΔCAGR</span>
+            <InfoTooltip {...FRACTAL_TOOLTIPS.deltaCAGR} severity="info" />
+          </div>
           <span style={{
             ...styles.deltaValue,
             color: deltaCAGR > 1 ? '#22c55e' : deltaCAGR < -1 ? '#ef4444' : '#64748b'
@@ -127,6 +145,7 @@ export default function VerdictHeader({ meta, recommendation, cellData, state, l
       {/* Recommendation Text */}
       {recommendation?.reasoning?.length > 0 && (
         <div style={styles.reasoning}>
+          <span style={styles.reasoningTitle}>Рекомендация системы:</span>
           {recommendation.reasoning.map((r, i) => (
             <span key={i} style={styles.reasonItem}>• {r}</span>
           ))}
