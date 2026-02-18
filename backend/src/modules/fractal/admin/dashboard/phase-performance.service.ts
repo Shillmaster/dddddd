@@ -540,6 +540,14 @@ export class PhasePerformanceService {
       return c.t;
     });
     
+    // Debug: log first few closes
+    console.log(`[PhasePerformance] First 3 closes:`, closes.slice(0, 3));
+    console.log(`[PhasePerformance] Last 3 closes:`, closes.slice(-3));
+    
+    // Filter out any invalid values
+    const validCount = closes.filter(c => typeof c === 'number' && !isNaN(c)).length;
+    console.log(`[PhasePerformance] Valid closes: ${validCount}/${closes.length}`);
+    
     // Group candles by detected phase
     const phaseData: Map<PhaseType, {
       returns: number[];
