@@ -5,10 +5,10 @@
 export {
   AdaptiveWeightingService,
   getAdaptiveWeightingService,
-  type HorizonStackItem,
-  type ConsensusResult74,
-  type Tier,
-  type VolRegime,
-  type Direction,
-  type ConflictLevel,
+  HorizonStackItem,
+  ConsensusResult74,
+  Tier,
+  VolRegime,
+  Direction,
+  ConflictLevel,
 } from './adaptive-weighting.service.js';
