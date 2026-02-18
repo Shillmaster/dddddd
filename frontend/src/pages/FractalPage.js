@@ -416,6 +416,20 @@ const FractalTerminal = () => {
             <SizingBreakdown sizing={sizing} volatility={volatility} />
           )}
 
+          {/* BLOCK 74.1: Horizon Stack View */}
+          {horizonStack && horizonStack.length > 0 && (
+            <HorizonStackView 
+              horizonStack={horizonStack} 
+              currentFocus={focus}
+              onFocusChange={setFocus}
+            />
+          )}
+
+          {/* BLOCK 74.2: Institutional Consensus Panel */}
+          {consensus74 && (
+            <ConsensusPanel consensus74={consensus74} />
+          )}
+
           {/* Decision Summary Cards */}
           {terminalData && (
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
