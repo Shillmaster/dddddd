@@ -1161,6 +1161,273 @@ class FractalAPITester:
         return success
 
     # ═══════════════════════════════════════════════════════════════
+    # BLOCK 73.5.2: PHASE CLICK DRILLDOWN TESTS
+    # ═══════════════════════════════════════════════════════════════
+
+    def test_phase_filter_focus_pack_no_filter(self):
+        """Test /api/fractal/v2.1/focus-pack without phaseId filter - should return all matches"""
+        params = {"symbol": "BTC", "focus": "30d"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            elif "focusPack" not in data:
+                success = False
+                details["error"] = "Expected 'focusPack' field"
+            else:
+                focus_pack = data["focusPack"]
+                overlay = focus_pack.get("overlay", {})
+                matches = overlay.get("matches", [])
+                
+                # Should have ~20 matches without filter
+                details["all_matches_count"] = len(matches)
+                if len(matches) < 15:
+                    success = False
+                    details["error"] = f"Expected at least 15 matches without filter, got {len(matches)}"
+                
+                # Should NOT have phaseFilter
+                phase_filter = focus_pack.get("phaseFilter")
+                if phase_filter is not None:
+                    success = False
+                    details["error"] = "Expected no phaseFilter when no phaseId provided"
+                
+                # Validate matches have phase field
+                if success and matches:
+                    phases_found = set()
+                    for match in matches[:5]:  # Check first 5
+                        if "phase" not in match:
+                            success = False
+                            details["error"] = "Match missing 'phase' field"
+                            break
+                        phases_found.add(match["phase"])
+                    
+                    details["phases_found"] = list(phases_found)
+                    if len(phases_found) < 2:
+                        details["warning"] = f"Only found {len(phases_found)} unique phases"
+        
+        self.log_test("Phase Filter - No Filter (All Matches)", success, details)
+        return success
+
+    def test_phase_filter_focus_pack_accumulation(self):
+        """Test /api/fractal/v2.1/focus-pack with phaseId=ACCUMULATION_2025-02-25_2025-03-01 - should filter by ACCUMULATION phase"""
+        params = {
+            "symbol": "BTC", 
+            "focus": "30d",
+            "phaseId": "ACCUMULATION_2025-02-25_2025-03-01"
+        }
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            elif "focusPack" not in data:
+                success = False
+                details["error"] = "Expected 'focusPack' field"
+            else:
+                focus_pack = data["focusPack"]
+                overlay = focus_pack.get("overlay", {})
+                matches = overlay.get("matches", [])
+                
+                # Should have fewer matches (filtered by ACCUMULATION)
+                details["filtered_matches_count"] = len(matches)
+                
+                # Should have phaseFilter object
+                phase_filter = focus_pack.get("phaseFilter")
+                if not phase_filter:
+                    success = False
+                    details["error"] = "Expected phaseFilter object when phaseId provided"
+                else:
+                    # Validate phaseFilter structure
+                    required_fields = ["phaseId", "phaseType", "filteredMatchCount", "active"]
+                    missing_fields = [f for f in required_fields if f not in phase_filter]
+                    if missing_fields:
+                        success = False
+                        details["error"] = f"Missing phaseFilter fields: {missing_fields}"
+                    elif phase_filter["phaseId"] != "ACCUMULATION_2025-02-25_2025-03-01":
+                        success = False
+                        details["error"] = f"Expected phaseId 'ACCUMULATION_2025-02-25_2025-03-01', got '{phase_filter['phaseId']}'"
+                    elif phase_filter["phaseType"] != "ACCUMULATION":
+                        success = False
+                        details["error"] = f"Expected phaseType 'ACCUMULATION', got '{phase_filter['phaseType']}'"
+                    elif not phase_filter["active"]:
+                        success = False
+                        details["error"] = "Expected phaseFilter.active to be true"
+                    elif phase_filter["filteredMatchCount"] != len(matches):
+                        success = False
+                        details["error"] = f"phaseFilter.filteredMatchCount ({phase_filter['filteredMatchCount']}) != matches length ({len(matches)})"
+                
+                # All filtered matches should have ACCUMULATION phase
+                if success and matches:
+                    non_accumulation = [m for m in matches if m.get("phase") != "ACCUMULATION"]
+                    if non_accumulation:
+                        success = False
+                        details["error"] = f"Found {len(non_accumulation)} non-ACCUMULATION matches in filtered results"
+                    else:
+                        details["note"] = f"✅ All {len(matches)} matches have ACCUMULATION phase"
+                
+                # Filtered count should be less than all matches (from previous test)
+                # We'll store this for comparison in a future comprehensive test
+                details["phase_filter_working"] = len(matches) < 20  # Assume unfiltered is ~20
+        
+        self.log_test("Phase Filter - ACCUMULATION Phase Type", success, details)
+        return success
+
+    def test_phase_filter_focus_pack_markup(self):
+        """Test /api/fractal/v2.1/focus-pack with phaseId=MARKUP_2024-01-01_2024-02-01 - should filter by MARKUP phase"""
+        params = {
+            "symbol": "BTC", 
+            "focus": "30d",
+            "phaseId": "MARKUP_2024-01-01_2024-02-01"
+        }
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            else:
+                focus_pack = data.get("focusPack", {})
+                overlay = focus_pack.get("overlay", {})
+                matches = overlay.get("matches", [])
+                
+                # Should have phaseFilter for MARKUP
+                phase_filter = focus_pack.get("phaseFilter")
+                if not phase_filter:
+                    success = False
+                    details["error"] = "Expected phaseFilter object"
+                elif phase_filter["phaseType"] != "MARKUP":
+                    success = False
+                    details["error"] = f"Expected phaseType 'MARKUP', got '{phase_filter['phaseType']}'"
+                
+                # All matches should be MARKUP phase
+                if success and matches:
+                    markup_count = sum(1 for m in matches if m.get("phase") == "MARKUP")
+                    if markup_count != len(matches):
+                        success = False
+                        details["error"] = f"Expected all {len(matches)} matches to be MARKUP, only {markup_count} are"
+                    else:
+                        details["markup_matches_count"] = len(matches)
+                        details["note"] = f"✅ All {len(matches)} matches have MARKUP phase"
+                else:
+                    # It's possible there are no MARKUP matches in current data
+                    details["markup_matches_count"] = 0
+                    details["note"] = "No MARKUP matches found (acceptable if data doesn't contain MARKUP periods)"
+        
+        self.log_test("Phase Filter - MARKUP Phase Type", success, details)
+        return success
+
+    def test_phase_filter_comparison(self):
+        """Test phase filtering by comparing unfiltered vs filtered match counts"""
+        # First get unfiltered count
+        params_all = {"symbol": "BTC", "focus": "30d"}
+        success_all, details_all = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params_all)
+        
+        if not success_all:
+            self.log_test("Phase Filter Comparison", False, {"error": "Failed to get unfiltered matches"})
+            return False
+        
+        all_data = details_all.get("response_data", {})
+        all_matches = all_data.get("focusPack", {}).get("overlay", {}).get("matches", [])
+        all_count = len(all_matches)
+        
+        # Get unique phases from all matches
+        all_phases = set(m.get("phase") for m in all_matches if m.get("phase"))
+        
+        # Now test filtering by first available phase
+        if not all_phases:
+            self.log_test("Phase Filter Comparison", False, {"error": "No phases found in matches"})
+            return False
+        
+        test_phase = list(all_phases)[0]  # Use first phase
+        params_filtered = {
+            "symbol": "BTC", 
+            "focus": "30d",
+            "phaseId": f"{test_phase}_2024-01-01_2024-02-01"
+        }
+        
+        success_filtered, details_filtered = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params_filtered)
+        
+        success = success_filtered
+        details = {
+            "all_matches_count": all_count,
+            "all_phases_found": list(all_phases),
+            "test_phase": test_phase
+        }
+        
+        if success:
+            filtered_data = details_filtered.get("response_data", {})
+            filtered_matches = filtered_data.get("focusPack", {}).get("overlay", {}).get("matches", [])
+            filtered_count = len(filtered_matches)
+            
+            details["filtered_matches_count"] = filtered_count
+            
+            # Filtered count should be less than all count
+            if filtered_count >= all_count:
+                success = False
+                details["error"] = f"Filtered count ({filtered_count}) should be < unfiltered count ({all_count})"
+            elif filtered_count == 0:
+                success = False
+                details["error"] = f"No matches found for {test_phase} phase - check if phase exists in data"
+            else:
+                # Validate all filtered matches have correct phase
+                wrong_phase_count = sum(1 for m in filtered_matches if m.get("phase") != test_phase)
+                if wrong_phase_count > 0:
+                    success = False
+                    details["error"] = f"{wrong_phase_count}/{filtered_count} matches have wrong phase"
+                else:
+                    details["note"] = f"✅ Phase filter working: {all_count} → {filtered_count} matches"
+                    details["phase_filter_effectiveness"] = f"{((all_count - filtered_count) / all_count * 100):.1f}% reduction"
+        
+        self.log_test("Phase Filter Comparison", success, details)
+        return success
+
+    def test_phase_filter_invalid_phaseId(self):
+        """Test /api/fractal/v2.1/focus-pack with invalid phaseId format"""
+        params = {
+            "symbol": "BTC", 
+            "focus": "30d",
+            "phaseId": "INVALID_FORMAT"  # Invalid - should have PHASE_FROM_TO format
+        }
+        success, details = self.make_request("GET", "/api/fractal/v2.1/focus-pack", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            focus_pack = data.get("focusPack", {})
+            
+            # With invalid phaseId, should either:
+            # 1. Return no matches (filtered to empty)
+            # 2. Return all matches (filter ignored)
+            # 3. Return error response
+            
+            overlay = focus_pack.get("overlay", {})
+            matches = overlay.get("matches", [])
+            phase_filter = focus_pack.get("phaseFilter")
+            
+            details["matches_count_with_invalid_phaseId"] = len(matches)
+            details["phase_filter_present"] = phase_filter is not None
+            
+            if phase_filter:
+                details["phase_filter_active"] = phase_filter.get("active", False)
+                details["phase_type"] = phase_filter.get("phaseType")
+                
+                # If phase filter is active with invalid format, that's unexpected
+                if phase_filter.get("active"):
+                    details["note"] = f"⚠️ Phase filter active with invalid phaseId format: {phase_filter.get('phaseType')}"
+                else:
+                    details["note"] = "Phase filter present but not active (acceptable for invalid format)"
+            else:
+                details["note"] = "No phase filter with invalid phaseId (acceptable behavior)"
+        
+        self.log_test("Phase Filter - Invalid PhaseId Format", success, details)
+        return success
+
+    # ═══════════════════════════════════════════════════════════════
     # BLOCK 70.2: HORIZON BINDING TESTS (FOCUS-PACK API)
     # ═══════════════════════════════════════════════════════════════
 
