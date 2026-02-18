@@ -64,6 +64,19 @@ export function FractalMainChart({
     // Build markers from focusPack forecast
     const markers = fp.markers || [];
     
+    // Get distribution series for 7D capsule mode
+    const distributionSeries = overlay?.distributionSeries || {};
+    
+    // Get last day quantiles for 7D display
+    const lastIdx = (distributionSeries.p50?.length || 1) - 1;
+    const distribution7d = {
+      p10: distributionSeries.p10?.[lastIdx] ?? -0.15,
+      p25: distributionSeries.p25?.[lastIdx] ?? -0.05,
+      p50: distributionSeries.p50?.[lastIdx] ?? 0,
+      p75: distributionSeries.p75?.[lastIdx] ?? 0.05,
+      p90: distributionSeries.p90?.[lastIdx] ?? 0.15,
+    };
+    
     // Convert distribution-based forecast to chart format
     // pricePath = central path (p50)
     // upperBand/lowerBand = confidence bands
@@ -81,10 +94,15 @@ export function FractalMainChart({
       })),
       aftermathDays,
       currentPrice,
+      // Distribution for 7D capsule mode
+      distribution7d,
       // Include distribution stats for display
       stats: overlay?.stats || {}
     };
   }, [chart, focusPack]);
+  
+  // Current price for summary panel
+  const currentPrice = chart?.candles?.[chart.candles.length - 1]?.c || 0;
 
   if (loading) {
     return (
