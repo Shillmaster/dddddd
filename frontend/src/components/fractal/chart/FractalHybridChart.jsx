@@ -147,6 +147,7 @@ export function FractalHybridChart({
         primaryMatch={primaryMatch}
         currentPrice={currentPrice}
         focus={focus}
+        divergence={focusPack?.divergence}
       />
     </div>
   );
