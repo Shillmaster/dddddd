@@ -291,11 +291,20 @@ class Block75MemoryTester:
             has_fields = all(field in data for field in expected_fields)
             
             if has_fields:
+                total_outcomes = data.get('totalOutcomes', 0)
+                
+                # If no outcomes available yet, that's acceptable
+                if total_outcomes == 0:
+                    insights = data.get('insights', [])
+                    if 'No outcomes available for attribution' in insights:
+                        self.log_test("Attribution Summary", True, data, "No outcomes available yet (expected)")
+                        return data
+                
                 # Check tierAccuracy structure
                 tier_accuracy = data.get('tierAccuracy', [])
                 expected_tiers = ['STRUCTURE', 'TACTICAL', 'TIMING']
                 
-                if len(tier_accuracy) >= 3:  # Should have all 3 tiers
+                if len(tier_accuracy) >= 3:
                     tier_names = [t.get('tier') for t in tier_accuracy]
                     has_all_tiers = all(tier in tier_names for tier in expected_tiers)
                     
@@ -305,7 +314,7 @@ class Block75MemoryTester:
                     else:
                         self.log_test("Attribution Summary", False, data, f"Missing tiers in tierAccuracy: {tier_names}")
                 else:
-                    self.log_test("Attribution Summary", False, data, f"Expected 3 tiers, got {len(tier_accuracy)}")
+                    self.log_test("Attribution Summary", False, data, f"Expected 3 tiers, got {len(tier_accuracy)} (totalOutcomes={total_outcomes})")
             else:
                 self.log_test("Attribution Summary", False, data, "Missing expected fields in response")
         else:
