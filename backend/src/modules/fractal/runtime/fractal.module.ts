@@ -163,6 +163,9 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   // BLOCK 67-68 — Regime Alert System
   await fastify.register(registerAlertRoutes);
 
+  // BLOCK 70.2 — FocusPack (Real Horizon Binding)
+  await fastify.register(focusPackRoutes);
+
   // Run bootstrap in background (non-blocking)
   const bootstrap = new FractalBootstrapService();
   bootstrap.ensureBootstrapped().catch(err => {
