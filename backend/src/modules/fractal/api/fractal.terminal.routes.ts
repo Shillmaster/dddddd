@@ -47,6 +47,12 @@ import {
   type SampleQuality,
   type PhaseType 
 } from '../admin/dashboard/phase-performance.service.js';
+import {
+  getAdaptiveWeightingService,
+  type HorizonStackItem,
+  type ConsensusResult74,
+  type VolRegime,
+} from '../consensus/index.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -78,6 +84,11 @@ interface TerminalPayload {
       phase: string;
     }>;
   };
+  // BLOCK 74.1: Horizon Stack (institutional intelligence layer)
+  horizonStack: HorizonStackItem[];
+  // BLOCK 74.2: Institutional Consensus
+  consensus74: ConsensusResult74;
+  // Legacy horizonMatrix for backward compatibility
   horizonMatrix: Array<{
     horizon: HorizonKey;
     tier: 'STRUCTURE' | 'TACTICAL' | 'TIMING';
@@ -97,6 +108,7 @@ interface TerminalPayload {
     phase: string;
     dominantHorizon: HorizonKey;
     explain: string[];
+  };
   };
   resolver: {
     timing: {
