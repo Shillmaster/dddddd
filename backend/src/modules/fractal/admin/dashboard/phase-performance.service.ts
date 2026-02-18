@@ -404,9 +404,9 @@ export class PhasePerformanceService {
    * Penalties:
    * - LOW_SAMPLE: -15
    * - VERY_LOW_SAMPLE: -25
-   * - HIGH_TAIL (P10 < threshold): -10
-   * - HIGH_DIVERGENCE (< 55): -10
-   * - LOW_RECENCY (< 0.4): -5
+   * - HIGH_TAIL (P10 < threshold): -8
+   * - HIGH_DIVERGENCE (< 55): -8
+   * - LOW_RECENCY (< 0.3): -3
    */
   private calcPhaseScore(stats: {
     hitRate: number;
@@ -420,17 +420,17 @@ export class PhasePerformanceService {
     const tailThreshold = TIER_TAIL_THRESHOLD[tier];
     
     // Normalize metrics to 0-1 scale
-    // HitRate: 35% = 0, 65% = 1 (tight range for meaningful signal)
-    const normHitRate = normalize(stats.hitRate, 0.35, 0.65);
+    // HitRate: 40% = 0, 60% = 1 (realistic range for crypto)
+    const normHitRate = normalize(stats.hitRate, 0.40, 0.60);
     
-    // Expectancy: tier-scaled (-retScale to +retScale*2)
-    const normExpectancy = normalize(stats.expectancy, -retScale, retScale * 2);
+    // Expectancy: tier-scaled (-retScale/2 to +retScale*1.5)
+    const normExpectancy = normalize(stats.expectancy, -retScale/2, retScale * 1.5);
     
-    // Sharpe: -0.5 to 2.0
-    const normSharpe = normalize(stats.sharpe, SHARPE_MIN, SHARPE_MAX);
+    // Sharpe: -0.5 to 1.5 (realistic for crypto)
+    const normSharpe = normalize(stats.sharpe, -0.5, 1.5);
     
-    // Divergence: 40-90 is good range (already 0-100 scale)
-    const normDiv = normalize(stats.avgDivergenceScore, 40, 90);
+    // Divergence: 50-85 is good range (already 0-100 scale)
+    const normDiv = normalize(stats.avgDivergenceScore, 50, 85);
     
     // INSTITUTIONAL WEIGHTED COMPOSITE
     // 40% HitRate + 25% Expectancy + 20% Sharpe + 15% Divergence
@@ -442,21 +442,21 @@ export class PhasePerformanceService {
     ) * 100;
     
     // ═══════════════════════════════════════════════════════════════
-    // PENALTIES (institutional risk management)
+    // PENALTIES (calibrated for institutional risk management)
     // ═══════════════════════════════════════════════════════════════
     
     // Sample quality penalties
-    if (sampleQuality === 'LOW_SAMPLE') score -= 15;
-    if (sampleQuality === 'VERY_LOW_SAMPLE') score -= 25;
+    if (sampleQuality === 'LOW_SAMPLE') score -= 12;
+    if (sampleQuality === 'VERY_LOW_SAMPLE') score -= 20;
     
-    // High tail risk penalty
-    if (stats.p10 < tailThreshold) score -= 10;
+    // High tail risk penalty (severe downside)
+    if (stats.p10 < tailThreshold) score -= 8;
     
     // High divergence penalty (model not confident)
-    if (stats.avgDivergenceScore < 55) score -= 10;
+    if (stats.avgDivergenceScore < 55) score -= 8;
     
-    // Low recency penalty (stale data)
-    if (stats.recencyWeight < 0.4) score -= 5;
+    // Low recency penalty (stale data) - less aggressive
+    if (stats.recencyWeight < 0.3) score -= 3;
     
     return Math.max(0, Math.min(100, score));
   }
