@@ -160,6 +160,12 @@ export class AdaptiveSizingService {
     // Governance modifier (usually 1.0 unless frozen)
     const governanceMod = context.flags.frozenOnly ? 0.5 : 1.0;
 
+    // ═══════════════════════════════════════════════════════════════
+    // BLOCK 73.7: Phase Grade Modifier
+    // Only apply boost if sampleQuality = OK
+    // ═══════════════════════════════════════════════════════════════
+    const phaseMod = this.computePhaseModifier(phaseGrade, phaseSampleQuality);
+
     // Calculate size before volatility (for attribution)
     const sizeBeforeVol = 
       baseSize * 
@@ -168,7 +174,8 @@ export class AdaptiveSizingService {
       conflictMod * 
       tailRiskMod * 
       reliabilityMod * 
-      governanceMod;
+      governanceMod *
+      phaseMod;  // BLOCK 73.7
 
     // Final size with volatility clamp
     let finalSize = sizeBeforeVol * volatilityMod;
@@ -190,6 +197,7 @@ export class AdaptiveSizingService {
     if (tailRiskMod < 1) explain.push(`× Tail risk: ${tailRiskMod.toFixed(2)}`);
     if (reliabilityMod < 1) explain.push(`× Reliability: ${reliabilityMod.toFixed(2)}`);
     if (governanceMod < 1) explain.push(`× Governance: ${governanceMod.toFixed(2)}`);
+    if (phaseMod !== 1) explain.push(`× Phase (${phaseGrade || 'N/A'}): ${phaseMod.toFixed(2)}`);
     explain.push(`= Final: ${(finalSize * 100).toFixed(1)}%`);
 
     return {
