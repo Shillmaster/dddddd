@@ -49,14 +49,78 @@ import {
 } from '../admin/dashboard/phase-performance.service.js';
 import {
   getAdaptiveWeightingService,
-  HorizonStackItem,
-  ConsensusResult74,
-  VolRegime,
 } from '../consensus/index.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
 // ═══════════════════════════════════════════════════════════════
+
+// BLOCK 74 Types (inline to avoid esbuild issues)
+type Tier74 = 'TIMING' | 'TACTICAL' | 'STRUCTURE';
+type Direction74 = 'BULLISH' | 'BEARISH' | 'FLAT';
+type ConflictLevel74 = 'NONE' | 'LOW' | 'MODERATE' | 'HIGH' | 'SEVERE';
+type VolRegime74 = 'LOW' | 'NORMAL' | 'HIGH' | 'EXPANSION' | 'CRISIS';
+
+interface HorizonStackItem74 {
+  horizon: HorizonKey;
+  tier: Tier74;
+  direction: Direction74;
+  confidenceRaw: number;
+  confidenceFinal: number;
+  phase: {
+    type: string;
+    grade: Grade;
+    score: number;
+    sampleQuality: SampleQuality;
+  };
+  divergence: {
+    score: number;
+    grade: Grade;
+    flags: string[];
+  };
+  tail: {
+    p95dd: number;
+    wfMaxDD: number;
+  };
+  matches: {
+    count: number;
+    primary: { id: string; score: number; return: number } | null;
+  };
+  blockers: string[];
+  voteWeight: number;
+  weightBreakdown: {
+    baseTier: number;
+    regimeMod: number;
+    divergenceMod: number;
+    phaseMod: number;
+    final: number;
+  };
+}
+
+interface ConsensusResult74Type {
+  consensusIndex: number;
+  conflictLevel: ConflictLevel74;
+  votes: Array<{
+    horizon: HorizonKey;
+    direction: Direction74;
+    weight: number;
+    contribution: number;
+  }>;
+  conflictReasons: string[];
+  resolved: {
+    action: 'BUY' | 'SELL' | 'HOLD';
+    mode: 'TREND_FOLLOW' | 'COUNTER_TREND' | 'WAIT';
+    sizeMultiplier: number;
+    dominantTier: Tier74;
+  };
+  adaptiveMeta: {
+    regime: VolRegime74;
+    structuralDominance: boolean;
+    divergencePenalties: number;
+    phasePenalties: number;
+    stabilityGuard: boolean;
+  };
+}
 
 interface TerminalPayload {
   meta: {
