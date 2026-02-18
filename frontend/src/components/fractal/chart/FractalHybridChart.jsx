@@ -712,4 +712,92 @@ const matchPickerStyles = {
   },
 };
 
+/**
+ * BLOCK 73.5.2 — Phase Filter Bar
+ * 
+ * Shows when a phase is selected (clicked).
+ * Displays phase context and clear button.
+ */
+function PhaseFilterBar({ phaseFilter, phaseStats, onClear }) {
+  if (!phaseFilter?.active) return null;
+  
+  const phaseColors = {
+    'ACCUMULATION': { bg: '#dcfce7', border: '#22c55e', text: '#166534' },
+    'MARKUP': { bg: '#dbeafe', border: '#3b82f6', text: '#1d4ed8' },
+    'DISTRIBUTION': { bg: '#fef3c7', border: '#f59e0b', text: '#b45309' },
+    'MARKDOWN': { bg: '#fce7f3', border: '#ec4899', text: '#9d174d' },
+    'RECOVERY': { bg: '#cffafe', border: '#06b6d4', text: '#0891b2' },
+    'CAPITULATION': { bg: '#fee2e2', border: '#ef4444', text: '#dc2626' },
+  };
+  
+  const colors = phaseColors[phaseFilter.phaseType] || { bg: '#f4f4f5', border: '#a1a1aa', text: '#52525b' };
+  
+  return (
+    <div 
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 16px',
+        backgroundColor: colors.bg,
+        borderBottom: `2px solid ${colors.border}`,
+      }}
+      data-testid="phase-filter-bar"
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <span style={{
+          backgroundColor: colors.border,
+          color: '#fff',
+          padding: '4px 10px',
+          borderRadius: 4,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: '0.5px',
+        }}>
+          {phaseFilter.phaseType}
+        </span>
+        <span style={{ fontSize: 12, color: colors.text }}>
+          Phase Filter Active
+        </span>
+        <span style={{ fontSize: 11, color: '#666' }}>
+          {phaseFilter.filteredMatchCount} matches in this phase type
+        </span>
+      </div>
+      
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {phaseStats && (
+          <span style={{ fontSize: 11, color: '#666' }}>
+            Return: <span style={{ 
+              fontWeight: 600, 
+              color: phaseStats.phaseReturnPct >= 0 ? '#16a34a' : '#dc2626' 
+            }}>
+              {phaseStats.phaseReturnPct >= 0 ? '+' : ''}{phaseStats.phaseReturnPct?.toFixed(1)}%
+            </span>
+            {' | '}
+            Duration: {phaseStats.durationDays}d
+          </span>
+        )}
+        <button
+          onClick={onClear}
+          data-testid="clear-phase-filter"
+          style={{
+            padding: '4px 12px',
+            backgroundColor: '#fff',
+            border: '1px solid #d4d4d4',
+            borderRadius: 6,
+            fontSize: 11,
+            fontWeight: 500,
+            cursor: 'pointer',
+            transition: 'all 0.15s ease',
+          }}
+          onMouseOver={(e) => { e.target.style.backgroundColor = '#f5f5f5'; }}
+          onMouseOut={(e) => { e.target.style.backgroundColor = '#fff'; }}
+        >
+          Clear Filter
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default FractalHybridChart;
