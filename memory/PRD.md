@@ -119,7 +119,32 @@ Response:
 }
 ```
 
+## What's Been Implemented
+
+### Session: 2026-02-18 (continued)
+
+#### BLOCK 73.8 — Phase Grade Integration in Decision Kernel (COMPLETED)
+**Backend (`fractal.terminal.routes.ts`):**
+- `getPhaseGradeForCurrentPhase()` - fetches phase grade from phase-performance service
+- `computePhaseConfidenceAdjustment()` - confidence adjustment logic
+- Phase grade passed to terminal payload sizing: `phaseGrade`, `phaseSampleQuality`, `phaseScore`
+- `confidenceAdjustment` object: `basePp`, `adjustmentPp`, `finalPp`, `reason`
+- PHASE factor added to breakdown array
+
+**Confidence Adjustment Rules:**
+- Grade A + divergence < 50 → +5pp
+- Grade A → +3pp
+- Grade B + divergence < 55 → +3pp
+- Grade B → +2pp
+- Grade D → -3pp
+- Grade F → -5pp
+
+**Frontend (`SizingBreakdown.jsx`):**
+- Phase Grade badge in header with color-coded styling
+- Confidence Adjustment section with boost/penalty display
+- PHASE factor in breakdown table
+
 ## Next Tasks
-1. Wire up phase grade to decision kernel for live trading
-2. Add confidence weight adjustment (Grade A + Divergence < 50 → Confidence +5pp)
-3. Test phase-aware sizing in production simulation
+1. Test phase-aware sizing in production simulation
+2. Add Phase Strength Indicator to terminal header
+3. Wire phase grade to full trading decision (beyond sizing)
