@@ -21,6 +21,7 @@ import {
   isValidHorizon 
 } from '../config/horizon.config.js';
 import type { FocusPack } from './focus.types.js';
+import { buildReplayPack } from '../replay/replay-pack.builder.js';
 
 // ═══════════════════════════════════════════════════════════════
 // ROUTES
