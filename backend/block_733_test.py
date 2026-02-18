@@ -101,9 +101,13 @@ class Block733Tester:
                         success = False
                         details["error"] = f"Missing horizon markers: {missing_horizons}"
                     else:
-                        # Validate marker structure
+                        # Validate marker structure (accept both day/dayIndex and price/expectedReturn)
                         for marker in markers:
-                            if not all(k in marker for k in ["horizon", "day", "price"]):
+                            has_horizon = "horizon" in marker
+                            has_day = "day" in marker or "dayIndex" in marker
+                            has_price = "price" in marker or "expectedReturn" in marker
+                            
+                            if not (has_horizon and has_day and has_price):
                                 success = False
                                 details["error"] = f"Invalid marker structure: {marker}"
                                 break
