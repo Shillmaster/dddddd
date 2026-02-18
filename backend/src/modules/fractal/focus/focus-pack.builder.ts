@@ -24,10 +24,12 @@ import {
   FocusPackDiagnostics,
   PrimarySelection,
   NormalizedSeries,
+  DivergenceMetrics,
   AxisMode,
   getFocusTier,
 } from './focus.types.js';
 import { selectPrimaryMatch } from '../match/primary-selector.service.js';
+import { calculateDivergence } from '../engine/divergence.service.js';
 
 // ═══════════════════════════════════════════════════════════════
 // FOCUS PACK BUILDER
