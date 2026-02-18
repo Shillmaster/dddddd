@@ -3632,6 +3632,11 @@ class FractalAPITester:
             self.test_fractal_v21_institutional_score(),
             self.test_fractal_v21_institutional_phase_risk(),
             self.test_fractal_v21_institutional_signal(),
+            # BLOCK 73.6: Phase Performance Heatmap tests
+            self.test_phase_performance_heatmap_basic(),
+            self.test_phase_performance_heatmap_all_tiers(),
+            self.test_phase_performance_heatmap_parameter_validation(),
+            self.test_phase_performance_grade_distribution(),
         ]
 
         # ═══════════════════════════════════════════════════════════════
