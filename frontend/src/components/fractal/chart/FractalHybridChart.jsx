@@ -206,6 +206,9 @@ export function FractalHybridChart({
     }
     return focusPack?.divergence;
   }, [focusPack, customReplayPack]);
+  
+  // BLOCK 73.5.2: Get phase filter info from focusPack
+  const phaseFilter = focusPack?.phaseFilter;
 
   if (loading || !chart?.candles) {
     return (
@@ -221,6 +224,15 @@ export function FractalHybridChart({
 
   return (
     <div style={{ width, background: "#fff", borderRadius: 12, overflow: "hidden" }}>
+      {/* BLOCK 73.5.2: Phase Filter Indicator */}
+      {phaseFilter?.active && (
+        <PhaseFilterBar 
+          phaseFilter={phaseFilter}
+          phaseStats={selectedPhaseStats}
+          onClear={() => handlePhaseClick(null)}
+        />
+      )}
+      
       {/* Chart Canvas with hybrid mode */}
       <FractalChartCanvas 
         chart={chart} 
@@ -230,7 +242,10 @@ export function FractalHybridChart({
         primaryMatch={primaryMatch}
         normalizedSeries={focusPack?.normalizedSeries}
         width={width} 
-        height={height} 
+        height={height}
+        // BLOCK 73.5.2: Phase click handler
+        onPhaseClick={handlePhaseClick}
+        selectedPhaseId={selectedPhaseId}
       />
       
       {/* BLOCK 73.4: Interactive Match Picker */}
