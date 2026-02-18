@@ -4,7 +4,7 @@
     "critical_bugs": [],
     "flaky_endpoints": [
       {
-        "endpoint": "https://tradeanalyzer-8.preview.emergentagent.com/api/fractal/v2.1/admin/snapshot/write-btc",
+        "endpoint": "https://fractal-engine.preview.emergentagent.com/api/fractal/v2.1/admin/snapshot/write-btc",
         "failure_rate": "100%",
         "symptoms": "POST requests return 520 CloudFlare error",
         "workaround": "Use local backend endpoint (localhost:8002) which works perfectly"

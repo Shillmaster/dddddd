@@ -1,127 +1,136 @@
 <analysis>**original_problem_statement:**
-The user wants to set up a full-stack application from a provided GitHub repository: . The initial request was to set up the frontend, backend (an isolated module named Fractal), and a MongoDB database.
+The user wants to continue developing a financial analysis tool with a focus on the 'Fractal' module. The project is hosted on GitHub: .
 
-Subsequent user requests evolved the task to:
-1.  Integrate the Fractal module as a new section within an existing, comprehensive admin panel.
-2.  Fix the authentication system for the main admin panel.
-3.  Implement a new Regime Alert System (BLOCK 67-68) with a corresponding backend API and a new Alerts tab in the UI.
-4.  Perform a cosmetic UI/UX overhaul of the Fractal admin panel to make it more modern and understandable for non-technical moderators. This includes adding tooltips with explanations.
-5.  Unify the language and design across all tabs in the Fractal admin module, keeping technical terms/metrics in English and providing all descriptions and help text in Russian.
+Initial Request:
+- Clone the repository and set up the frontend, backend, and admin panel.
+- Continue work on the frontend logic for updating the UI based on different time horizons (e.g., 7D, 30D, 365D).
 
-**User's preferred language**: Russian. The user communicates exclusively in Russian. The next agent MUST respond in Russian.
+Key requirements and evolution of the task:
+1.  **STEP 2 - Real Horizon Wiring:** Make the UI (charts, forecasts, metrics) fully reactive to the selected time horizon. This was successfully implemented.
+2.  **BLOCK 72 - 7D UX Redesign:** The initial 7-day forecast was a straight line (палочка - a stick), which was a poor user experience. The user guided the agent through several iterations:
+    *   From a line to a Probability Capsule.
+    *   From a capsule to a large Directional Arrow.
+    *   To a compact, integrated arrow with an Insight Block on the chart. This is the current implementation.
+3.  **14D+ Spline Smoothing:** The forecast trajectories for horizons of 14 days or more appeared broken (обрыв). This was fixed by implementing Catmull-Rom spline interpolation for a smooth curve.
+4.  **STEP A - Canvas Refactor:** To support more advanced features, the user requested an architectural refactor to create three distinct rendering modes for the chart:
+    *   **Price (Synthetic):** The default view showing the model's forecast.
+    *   **Replay (Historical):** A view for comparing the current pattern to a historical match.
+    *   **Hybrid (Dual View):** A new mode showing both the synthetic and replay forecasts on the same chart for divergence analysis. This was the last completed task.
+5.  **FRACTAL TERMINAL V3 ROADMAP:** The user has outlined a long-term architectural roadmap for the project, starting with . The immediate next step is .
+
+**User's preferred language**: Russian. The next agent MUST respond in Russian.
 
 **what currently exists?**
-The application is a complex full-stack trading analysis tool with a React frontend and a TypeScript/Fastify backend. The environment is fully set up and running.
+A full-stack application with a React/TypeScript frontend and a Node.js/TypeScript backend. The main feature is a 'Fractal Terminal' which displays financial chart data with predictive forecasts based on historical patterns.
 
-- **Backend**: The TypeScript backend is operational, connected to MongoDB, and serves all necessary APIs. It runs in an isolated FRACTAL_ONLY mode.
-- **Frontend**: The React frontend is compiled and running without errors.
-- **Admin Panel**: A comprehensive admin panel exists with a sidebar navigation structure.
-- **Authentication**: Admin authentication is working. Credentials are  / .
-- **Fractal Module Integration**: The Fractal module has been successfully integrated into the main admin panel's navigation sidebar under Modules.
-- **Alert System (BLOCK 67-68)**: The backend API for the alert system is fully implemented, including endpoints for listing alerts, checking quotas, and running checks. The frontend Alerts tab is also implemented.
-- **UI/UX Overhaul**: The Overview tab of the Fractal admin panel has been completely redesigned with a cleaner layout, progress bars, and informative tooltips in Russian, while keeping technical terms in English. The Volatility and Alerts tabs have also been updated to this new standard.
+The application is fully functional and has undergone significant UI/UX enhancements. Key features include:
+- A horizon selector (7D, 14D, 30D, etc.) that dynamically updates the entire chart view.
+- A custom, minimalist UI for the 7D forecast (an Insight Block with a directional arrow).
+- Smooth, spline-interpolated forecast trajectories for horizons of 14 days and longer.
+- A three-mode canvas architecture:  (model forecast),  (historical match), and  (a side-by-side view of both forecasts).
 
 **Last working item**:
-The agent was in the process of applying the new unified UI/UX design to all tabs within the Fractal admin panel, as requested by the user.
-
-- **Last item agent was working**: Unifying the UI/UX of the **Shadow** tab to match the new design standard (English technical terms, Russian descriptions/tooltips). The agent had already updated the  and  tabs.
-- **Status**: IN PROGRESS
-- **Agent Testing Done**: N
-- **Which testing method agent to use?**: screenshot tool. The agent needs to verify the UI of the  page to ensure the design is consistent with the other tabs and that the new tooltips are functional.
-- **User Testing Done**: N
+-   **Last item agent was working**: The agent was implementing **STEP A - Canvas Refactor**. This involved creating a three-mode architecture (, , ) for the main chart. The agent successfully added the UI switcher and created a functional MVP of the Hybrid mode, which displays both the synthetic model's forecast and the top historical match's replay as two separate lines on the chart, along with a panel showing the divergence between them.
+-   **Status**: COMPLETED
+-   **Agent Testing Done**: Y (Verified via screenshots that the mode switcher works and the Hybrid view displays the two lines, a legend, and a divergence panel).
+-   **User Testing Done**: N
 
 **All Pending/In progress Issue list**:
-- There are no outstanding bugs or issues. The current work is a feature enhancement/task completion.
+There are no pending bugs or broken features. The work is proceeding based on the user's feature roadmap.
 
 **In progress Task List**:
-- **Task 1: Complete UI/UX unification for the Fractal admin panel (P0)**
-    - **Where to resume**: The agent needs to update the components for the **Shadow** tab. The primary files to modify are  and .
-    - **What will be achieved with this?**: A consistent, polished, and user-friendly UI across all tabs of the Fractal admin module, fulfilling the user's explicit request for a clear visual hierarchy.
-    - **Status**: IN PROGRESS
-    - **Should Test frontend/backend/both after fix?**: Frontend
-    - **Blocked on something**: None.
+There are no tasks currently in progress. The last task (STEP A - Canvas Refactor) was completed.
 
 **Upcoming and Future Tasks**
+
+The user has defined a clear, multi-phase roadmap for Fractal Terminal v3.
+
 **Upcoming Tasks:**
-- **P0: **: This is the next logical step after the UI is finalized. It involves activating the backend alert triggers (e.g., Regime Shift, Health Drop) so they automatically generate alerts based on data changes. This will primarily involve backend work in  and the daily cron job that runs it.
-- **P1: **: Enhance the Alerts tab UI by adding deep links from each alert to the relevant section of the admin panel (e.g., an alert about volatility links directly to the Volatility tab, pre-filtered to the time of the event).
+-   **P0: BLOCK 73.1 — Primary Match Selection Engine (Backend)**: This is the highest priority next step. The goal is to stop using the default  as the historical replay. Instead, a weighted scoring engine needs to be implemented on the backend to select a single Primary Match based on multiple criteria (similarity, stability, volatility match, etc.). The  API response should be extended to include this  object. The user has provided a detailed implementation spec, including TypeScript types and scoring logic.
+    -   **File to create/edit**:  and integrate it into .
 
 **Future Tasks:**
-- ****: Implement API endpoints for exporting and verifying the model contract for compliance purposes.
-- ****: Create a service to generate and send a weekly summary report via Telegram.
-- ****: Perform a code audit and refactor to ensure the Fractal module is fully isolated and can be used as a portable plug-in.
-- ****: Implement business-oriented features such as tiered user access, monetization, and public-facing dashboards.
+-   **P1: 365D Axis Normalization (Frontend)**: For long horizons (180D, 365D), the Y-axis of the chart should switch from raw price to a percentage-based scale relative to the current price. This is a frequently requested fix to prevent the chart from looking squashed or like a flat line.
+-   **P1: BLOCK 73.2 — Divergence Engine & Hybrid UI Polish (Backend/Frontend)**: Enhance the Hybrid view to calculate and display a  between the synthetic and primary replay forecasts. This score should then be used as a confidence modifier.
+-   **P2: BLOCK 74 — Multi-Horizon Intelligence Stack**: Make the fractal search algorithm horizon-specific (e.g., 7D looks for timing patterns, 365D looks for cycle alignment).
+-   **P2: BLOCK 75 — Memory & Self-Validation Layer**: Implement a system to save forecasts and compare them against actual market movements to auto-tune the model's accuracy and weights over time.
+-   **P3: BLOCK 76 & beyond**: Further architectural refactoring and institutional-grade feature additions as outlined in the user's roadmap.
 
 **Completed work in this session**
-- **Project Setup**: Cloned the repository and successfully configured the entire full-stack application (React, TypeScript/Fastify, MongoDB).
-- **Admin Integration**: Integrated the standalone  pages into the main platform admin panel, including adding it to the navigation sidebar ().
-- **Authentication Fix**: Debugged and fixed the admin login flow by adding missing routes to the backend's isolated run mode and correcting a frontend bug where the response body was read twice.
-- **Alert System (BLOCK 67-68)**: Implemented the backend API and frontend UI for a comprehensive alert system, including rate-limiting, statistics, and a history log.
-- **UI/UX Overhaul (Overview Tab)**: Redesigned the Overview tab in the Fractal admin panel with a modern aesthetic, clearer data visualization, and Russian tooltips for non-technical users ( and associated cards).
-- **UI/UX Unification (Volatility & Alerts Tabs)**: Extended the new design and language standard to the Volatility and Alerts tabs.
+-   **Environment Setup**: Cloned the repository, installed all dependencies, and correctly configured  to run the TypeScript backend via a Python proxy.
+-   **Core Feature - Horizon Wiring**: Implemented the logic for the time horizon selector (, , etc.) to dynamically update the chart forecast, markers, and stats panels.
+-   **UI/UX Redesign - 7D View**: Iteratively redesigned the 7D forecast view from a simple line to a Probability Capsule and finally to the current Insight Block with a compact directional arrow.
+    -   Files: , .
+-   **UI/UX Polish - Trajectory Smoothing**: Implemented Catmull-Rom spline interpolation to create smooth forecast curves for horizons >= 14D, fixing the broken line issue.
+    -   File: .
+-   **Architectural Refactor - 3-Mode Canvas**: Restructured the chart rendering logic to support three distinct modes:  (synthetic),  (historical), and  (dual view).
+    -   Files: , , .
+
+**Earlier issues found/mentioned but not fixed**
+-   **Issue 1: 365D Axis Normalization**:
+    -   **Description**: On long-term horizons (180D, 365D), the chart's Y-axis uses a raw price scale. Because the price range over a year can be vast, the historical price action appears squashed or like a flat line, making it unreadable.
+    -   **Why fix this?**: To make long-term structural forecasts readable and useful. The current visualization looks like a bug.
+    -   **Next debug checklist**: Implement logic in  to detect if the focus is  or . If so, create a new  that is based on percentage change from the current price, and transform all data points (historical candles and forecast) using this scale before rendering. The tooltip formatter also needs to be updated to show percentages.
+    -   **Status**: NOT STARTED
+    -   **Should Test frontend/backend/both after fix?**: Frontend
+
+**Known issue recurrence from previous fork**
+-   None.
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
-- **Frontend**: React,  for configuration overrides, JavaScript (JSX).
-- **Backend**: TypeScript, Fastify (web framework), Mongoose (MongoDB ODM).
-- **Database**: MongoDB.
-- **Architecture**: Modular full-stack application. The backend runs as a Node.js process managed by a Python proxy () and .
+-   **Frontend**: React, TypeScript, HTML5 Canvas API for custom charting, State Management (useState, useEffect).
+-   **Backend**: Node.js, TypeScript, Fastify framework.
+-   **Charting**: Custom implementation using the Canvas API, including Catmull-Rom splines for curve smoothing.
+-   **Architecture**: A three-mode rendering system (, , ) for displaying different analytical views.
 
 **key DB schema**
-- **fractal_alerts_log**:
-    - : 'BTC'
-    - : String ('REGIME_SHIFT', 'HEALTH_DROP', etc.)
-    - : String ('INFO', 'HIGH', 'CRITICAL')
-    - : String (for deduplication)
-    - : Object (detailed metrics at the time of the alert)
-    - : String ('NONE', 'DEDUP', 'QUOTA')
-    - : Date
+- Not explicitly defined in the history, but the backend uses MongoDB. The primary data structure exchanged between backend and frontend is the , which contains candle data, forecast distribution series, and historical matches.
 
 **All files of reference**
-- : Next file to be updated.
-- : Next file to be updated.
-- : Reusable component containing Russian explanations. New tooltips may need to be added here.
-- : Defines the structure of the admin sidebar.
-- : Core backend logic for the alert system.
-- : Entry point for the isolated Fractal backend; any new core routes must be registered here.
-
-**key api endpoints**
-- **Authentication**: 
-- **Fractal Admin Data**: 
-- **Alerts API**:
-    -  (List alerts)
-    -  (Check rate-limit status)
-    -  (Manually trigger alert check)
+-   : Main page component, holds the  state.
+-   : The core component managing the canvas element and orchestrating the different rendering modes (, , ).
+-   : The UI component with the three buttons to switch modes.
+-   : Renders the smoothed trajectory for horizons >= 14D.
+-   : Renders the custom Insight Block for the 7D horizon.
+-   : Renders the Hybrid view, including the legend and divergence panel.
+-   : The backend file where the  will need to be integrated.
 
 **Critical Info for New Agent**
-- **Language**: The user is Russian. You MUST communicate in Russian. All UI text for explanation/guidance should be in Russian, while technical labels and metrics must remain in English.
-- **Authentication**: The admin credentials are **username:** , **password:** .
-- **FRACTAL_ONLY Mode**: The backend runs in an isolated mode via . If any core platform features (like auth) seem to be missing, you may need to import and register their modules in this file.
-- **Telegram is not configured**: The alert system is designed to send Telegram messages, but the  and  environment variables are not set. This is expected. The system should function correctly, but no messages will be sent. Do not ask the user for these credentials.
+-   The user is highly technical, provides very detailed instructions, and has a clear long-term vision. Follow the user's roadmap and implementation specs precisely.
+-   The immediate next task is **BLOCK 73.1 (Primary Match Selection Engine)**, which is a **backend** task. Do not start with any frontend changes.
+-   The codebase now has a three-mode rendering architecture. Any new features should respect this separation of concerns ( vs.  vs. ).
+-   The user prefers minimalist, institutional-grade UI. Avoid clutter and unnecessary visual elements.
 
 **documents and test reports created in this job**
-- 
-- 
-- 
+-   
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User Request**: Unify the UI of the remaining admin tabs (, , ) to match the new design. (Status: IN PROGRESS)
-2.  **User Feedback**: Acknowledged the agent's plan.
-3.  **User Feedback**: (No message, just implicit continuation).
-4.  **User Feedback**: (No message,  tool was used).
-5.  **User Request**: Clarified the localization requirement: keep technical terms in English but make all descriptions/explanations for moderators in Russian to avoid a mess. (Status: IN PROGRESS)
-6.  **User Feedback**: Acknowledged the agent's work.
-7.  **User Feedback**: Saw the screenshot of the improved UI with a working tooltip and was satisfied. (Status: COMPLETED for Overview tab)
-8.  **User Feedback**: Confirmed the tooltip functionality is perfect.
-9.  **User Request**: Initial request for UI/UX polish on the admin panel. Wanted tooltips and a more modern, less geeky design for moderators. (Status: IN PROGRESS)
-10. **User Bug Report**: Reported a bug with login. (Status: RESOLVED)
+10. User confirms the plan for STEP A (Canvas Refactor) and then BLOCK 73.1.
+9. User proposes BLOCK 73.1 (Primary Match Selection Engine) as the next step, providing a detailed institutional-grade specification.
+8. User agrees with the 3-mode architecture and asks to proceed with STEP A.
+7. User proposes a detailed plan for STEP A - Canvas Refactor to create three distinct chart modes (Price, Replay, Hybrid).
+6. User provides a full Fractal Terminal V3 roadmap, starting with BLOCK 73 (Replay Engine).
+5. User provides feedback on the spline implementation and is ready to move on.
+4. User confirms the plan to fix the 14D spline and add the 7D Insight Block.
+3. User gives feedback on the compact arrow, noting the visual vacuum on the right, and reiterates the need to fix the 14D gap and 365D scaling.
+2. User confirms the plan for the compact 7D arrow.
+1. User provides feedback on the previous big arrow implementation, requesting a more compact, integrated arrow and a minimal text block below the chart.
 
-**Credentials to test flow:**
-- **Admin Panel URL**: 
-- **Username**: 
-- **Password**: 
+**Project Health Check:**
+-   **Live and Running**: The application is fully operational.
+-   **Stable**: No known crashes or critical bugs.
+-   **Refactored**: The recent architectural refactor provides a solid foundation for the V3 roadmap.
+
+**3rd Party Integrations**
+- None identified or requested.
+
+**Testing status**
+-   **testing_agent_v3**: Used successfully once to validate the BLOCK 72 implementation.
+-   **Manual Testing**: The primary method of verification was taking screenshots of the application after each change and having the agent (and user) visually confirm the results.
+-   **Test files created**: None.
 
 **What agent forgot to execute**
-- The agent was in the middle of executing the UI unification task and had not forgotten any steps. The next logical action is to continue that work on the Shadow tab components.</analysis>
+-   **365D Axis Normalization**: This fix was requested multiple times by the user to address the unreadable chart scale on long-term horizons. The agent prioritized other UI/UX polishes for 7D and 14D views and has not yet implemented this. It is listed as a P1 Future Task.</analysis>

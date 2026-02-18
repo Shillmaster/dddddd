@@ -5,7 +5,7 @@
     "critical_bugs": [],
     "flaky_endpoints": [
       {
-        "endpoint": "External URL (https://tradeanalyzer-8.preview.emergentagent.com)",
+        "endpoint": "External URL (https://fractal-engine.preview.emergentagent.com)",
         "issue": "Intermittent Cloudflare 520 errors - backend connectivity issues",
         "failure_rate": "60%",
         "symptoms": "Some requests succeed, others return Cloudflare 520 Web server error",
