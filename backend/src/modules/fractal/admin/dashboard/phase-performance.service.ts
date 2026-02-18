@@ -248,7 +248,6 @@ function detectPhaseSimple(closes: number[]): PhaseType {
 
 export class PhasePerformanceService {
   private canonicalStore = new CanonicalStore();
-  private phaseDetector = new PhaseDetector();
   
   /**
    * Get phase for a given date from price data
@@ -260,13 +259,13 @@ export class PhasePerformanceService {
       const from = new Date(date.getTime() - lookbackDays * 24 * 60 * 60 * 1000);
       
       const candles = await this.canonicalStore.getRange(symbol, '1D', from, date);
-      if (!candles || candles.length < 20) return 'UNKNOWN';
+      if (!candles || candles.length < 50) return 'UNKNOWN';
       
-      // Use phase detector on last candle
+      // Use inline phase detector
       const closes = candles.map(c => c.c);
-      const phase = this.phaseDetector.detectPhaseSimple(closes);
+      const phase = detectPhaseSimple(closes);
       
-      return (phase?.toUpperCase() || 'UNKNOWN') as PhaseType;
+      return phase;
     } catch {
       return 'UNKNOWN';
     }
