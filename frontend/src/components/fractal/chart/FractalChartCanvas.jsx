@@ -65,9 +65,13 @@ function Tooltip({ candle, sma, phase }) {
   );
 }
 
-export function FractalChartCanvas({ chart, forecast, width, height }) {
+export function FractalChartCanvas({ chart, forecast, focus = '30d', width, height }) {
   const ref = useRef(null);
   const [hoverIndex, setHoverIndex] = useState(null);
+  
+  // BLOCK 72: Determine render mode based on focus
+  const renderMode = focus === '7d' ? 'CAPSULE_7D' : 'TRAJECTORY';
+  const axisMode = (focus === '180d' || focus === '365d') ? 'PCT_NORMALIZED' : 'PRICE';
 
   // Increased right margin for forecast zone (enough for full 30d + labels)
   const margins = useMemo(() => ({ left: 60, right: 320, top: 24, bottom: 36 }), []);
