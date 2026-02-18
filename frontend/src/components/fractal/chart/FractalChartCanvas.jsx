@@ -178,8 +178,21 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
     // anchor at last candle x
     const xAnchor = x(candles.length - 1);
     
-    // BLOCK 72.3: Choose forecast renderer based on focus
-    if (renderMode === 'CAPSULE_7D' && forecast?.distribution7d) {
+    // BLOCK 72.3: Choose forecast renderer based on focus and mode
+    if (mode === 'hybrid' && primaryMatch) {
+      // Hybrid mode: draw both synthetic and replay
+      drawHybridForecast(
+        ctx,
+        forecast,
+        primaryMatch,
+        xAnchor,
+        y,
+        plotW,
+        margins.top,
+        margins.bottom,
+        height
+      );
+    } else if (renderMode === 'CAPSULE_7D' && forecast?.distribution7d) {
       // 7D: Draw compact directional arrow + insight block
       draw7dArrow(
         ctx,
