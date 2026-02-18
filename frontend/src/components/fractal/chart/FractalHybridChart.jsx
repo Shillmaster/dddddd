@@ -1,14 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import { FractalChartCanvas } from "./FractalChartCanvas";
 
 /**
  * STEP A — Hybrid Projection Chart (MVP)
+ * BLOCK 73.4 — Interactive Match Replay
  * 
  * Shows both projections on same chart:
  * - Synthetic (green) - model forecast
- * - Replay (purple) - best historical match aftermath
+ * - Replay (purple) - selected historical match aftermath
  * 
- * Future: divergence analysis, confidence blend
+ * User can click on match chips to switch replay line
  */
 
 export function FractalHybridChart({ 
@@ -20,6 +21,11 @@ export function FractalHybridChart({
 }) {
   const [chart, setChart] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // BLOCK 73.4: Selected match state
+  const [selectedMatchId, setSelectedMatchId] = useState(null);
+  const [customReplayPack, setCustomReplayPack] = useState(null);
+  const [replayLoading, setReplayLoading] = useState(false);
 
   const API_URL = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -42,6 +48,33 @@ export function FractalHybridChart({
 
     return () => { alive = false; };
   }, [symbol, API_URL]);
+  
+  // Reset selection when focus changes
+  useEffect(() => {
+    setSelectedMatchId(null);
+    setCustomReplayPack(null);
+  }, [focus]);
+  
+  // BLOCK 73.4: Fetch replay pack when user selects a match
+  const handleMatchSelect = useCallback(async (matchId) => {
+    if (!matchId || matchId === selectedMatchId) return;
+    
+    setSelectedMatchId(matchId);
+    setReplayLoading(true);
+    
+    try {
+      const res = await fetch(`${API_URL}/api/fractal/v2.1/replay-pack?symbol=${symbol}&focus=${focus}&matchId=${matchId}`);
+      const data = await res.json();
+      
+      if (data.ok && data.replayPack) {
+        setCustomReplayPack(data.replayPack);
+      }
+    } catch (err) {
+      console.error('[ReplayPack] Fetch error:', err);
+    } finally {
+      setReplayLoading(false);
+    }
+  }, [API_URL, symbol, focus, selectedMatchId]);
 
   // Build forecast from focusPack
   const forecast = useMemo(() => {
