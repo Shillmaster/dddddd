@@ -4056,6 +4056,7 @@ class FractalAPITester:
         block74_tests = [
             self.test_horizon_stack_structure(),
             self.test_consensus74_structure(),
+            self.test_block743_adaptive_weighting_hard_structural_dominance(),
             self.test_horizon_stack_adaptive_weights(),
             self.test_consensus_institutional_logic(),
         ]
