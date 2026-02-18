@@ -109,6 +109,14 @@ export async function buildFocusPack(
   // Build diagnostics
   const diagnostics = buildDiagnostics(matchResult, overlay, allCandles);
   
+  // BLOCK 73.1: Select Primary Match using weighted scoring
+  const selectionResult = selectPrimaryMatch(overlay.matches, focus);
+  const primarySelection: PrimarySelection = {
+    primaryMatch: selectionResult.primaryMatch,
+    candidateCount: selectionResult.candidateCount,
+    selectionMethod: selectionResult.selectionMethod,
+  };
+  
   const meta: FocusPackMeta = {
     symbol,
     focus,
