@@ -48,6 +48,8 @@ interface ChartResponse {
   candles: CandleData[];
   sma200: SMA200Point[];
   phaseZones: PhaseZone[];
+  // BLOCK 73.5.1: Phase stats for hover
+  phaseStats?: PhaseStats[];
 }
 
 // ═══════════════════════════════════════════════════════════════
