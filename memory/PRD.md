@@ -144,7 +144,24 @@ Response:
 - Confidence Adjustment section with boost/penalty display
 - PHASE factor in breakdown table
 
+#### BLOCK 74 — Multi-Horizon Intelligence Stack (COMPLETED)
+
+**74.1 Horizon Stack View (Backend + Frontend):**
+- `horizonStack[]` in terminal payload with 6 horizons (7d-365d)
+- Each horizon: tier, direction, confidenceFinal, phase, divergence, tail, matches, blockers, voteWeight
+- Adaptive weighting: baseTier × regimeMod × divergenceMod
+- Frontend: `HorizonStackView.jsx` - clickable horizon rows with tier colors
+
+**74.2 Institutional Consensus (Backend + Frontend):**
+- `consensus74` object in terminal payload
+- consensusIndex (0-100), conflictLevel, votes[], conflictReasons[], resolved
+- resolved: action (BUY/SELL/HOLD), mode (TREND_FOLLOW/COUNTER_TREND/WAIT), sizeMultiplier, dominantTier
+- adaptiveMeta: regime, structuralDominance, divergencePenalties, phasePenalties, stabilityGuard
+- Frontend: `ConsensusPanel.jsx` - institutional consensus display with expandable details
+
 ## Next Tasks
-1. Test phase-aware sizing in production simulation
+1. BLOCK 74.3 - Adaptive Weighting 2.0 (CRISIS → STRUCTURE ×1.35, TIMING ×0.60)
 2. Add Phase Strength Indicator to terminal header
-3. Wire phase grade to full trading decision (beyond sizing)
+3. Test frontend components after preview servers wake up
+4. Production simulation testing
+
