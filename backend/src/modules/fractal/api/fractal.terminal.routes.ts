@@ -539,6 +539,57 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
           })),
         },
         horizonMatrix,
+        // BLOCK 74.1: Horizon Stack (institutional intelligence layer)
+        horizonStack: horizonMatrix.map((h, idx) => {
+          const tier = h.tier as 'TIMING' | 'TACTICAL' | 'STRUCTURE';
+          const direction = h.direction === 'BULL' ? 'BULLISH' : h.direction === 'BEAR' ? 'BEARISH' : 'FLAT';
+          
+          // Adaptive weights based on tier and regime
+          const baseWeight = tier === 'STRUCTURE' ? 0.42 : tier === 'TACTICAL' ? 0.36 : 0.22;
+          const regimeMod = volatilityResult.regime === 'CRISIS' ? 
+            (tier === 'STRUCTURE' ? 1.35 : tier === 'TIMING' ? 0.6 : 1.1) : 1.0;
+          const divMod = h.entropy > 0.7 ? 0.7 : h.entropy > 0.5 ? 0.9 : 1.0;
+          const voteWeight = baseWeight * regimeMod * divMod;
+          
+          return {
+            horizon: h.horizon,
+            tier,
+            direction,
+            confidenceRaw: h.confidence,
+            confidenceFinal: h.confidence * (1 - h.entropy * 0.3),
+            phase: { type: globalPhase, grade: 'C', score: 50, sampleQuality: 'OK' },
+            divergence: { score: (1 - h.entropy) * 100, grade: h.entropy < 0.3 ? 'A' : h.entropy < 0.5 ? 'B' : h.entropy < 0.7 ? 'C' : 'F', flags: h.entropy > 0.7 ? ['HIGH_DIVERGENCE'] : [] },
+            tail: { p95dd: h.tailRisk, wfMaxDD: h.tailRisk * 0.6 },
+            matches: { count: overlayResult?.matches?.length || 0, primary: overlayResult?.matches?.[0] ? { id: overlayResult.matches[0].id || 'unknown', score: overlayResult.matches[0].similarity || 0, return: overlayResult.matches[0].forwardReturn || 0 } : null },
+            blockers: h.blockers,
+            voteWeight,
+          };
+        }),
+        // BLOCK 74.2: Institutional Consensus
+        consensus74: (() => {
+          const votes = horizonMatrix.map(h => {
+            const dir = h.direction === 'BULL' ? 1 : h.direction === 'BEAR' ? -1 : 0;
+            const tier = h.tier as 'TIMING' | 'TACTICAL' | 'STRUCTURE';
+            const baseWeight = tier === 'STRUCTURE' ? 0.42 : tier === 'TACTICAL' ? 0.36 : 0.22;
+            const weight = baseWeight / horizonMatrix.length;
+            return { horizon: h.horizon, direction: h.direction === 'BULL' ? 'BULLISH' : h.direction === 'BEAR' ? 'BEARISH' : 'FLAT', weight, contribution: dir * weight * h.confidence };
+          });
+          const rawConsensus = votes.reduce((sum, v) => sum + v.contribution, 0);
+          const consensusIdx = Math.round(50 + rawConsensus * 50);
+          const bullW = votes.filter(v => v.direction === 'BULLISH').reduce((s, v) => s + v.weight, 0);
+          const bearW = votes.filter(v => v.direction === 'BEARISH').reduce((s, v) => s + v.weight, 0);
+          const conflictLvl = Math.abs(bullW - bearW) < 0.2 ? 'HIGH' : Math.abs(bullW - bearW) < 0.35 ? 'MODERATE' : 'LOW';
+          const structDir = horizonMatrix.filter(h => h.tier === 'STRUCTURE').reduce((d, h) => h.direction === 'BULL' ? 'BULLISH' : h.direction === 'BEAR' ? 'BEARISH' : d, 'FLAT' as string);
+          const action = rawConsensus > 0.1 ? 'BUY' : rawConsensus < -0.1 ? 'SELL' : 'HOLD';
+          return {
+            consensusIndex: consensusIdx,
+            conflictLevel: conflictLvl,
+            votes,
+            conflictReasons: conflictLvl === 'HIGH' ? ['Mixed signals across tiers'] : [],
+            resolved: { action, mode: action === 'HOLD' ? 'WAIT' : 'TREND_FOLLOW', sizeMultiplier: Math.min(1, Math.abs(rawConsensus) * 1.5), dominantTier: 'STRUCTURE' },
+            adaptiveMeta: { regime: volatilityResult.regime, structuralDominance: true, divergencePenalties: 0, phasePenalties: 0, stabilityGuard: false },
+          };
+        })(),
         structure: {
           globalBias: resolved.bias.dir,
           biasStrength: resolved.bias.strength,
