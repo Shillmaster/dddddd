@@ -736,8 +736,8 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
       // BLOCK 74.1 + 74.2: Build Horizon Stack + Institutional Consensus
       // ═══════════════════════════════════════════════════════════════
       
-      // Map volatility regime to VolRegime type
-      const volRegime: VolRegime = volatilityResult.regime as VolRegime;
+      // Map volatility regime to VolRegime74 type
+      const volRegime = volatilityResult.regime as VolRegime74;
       
       // Get phase grades for each tier
       const phaseGrades: Record<string, { grade: Grade; score: number; sampleQuality: SampleQuality }> = {};
