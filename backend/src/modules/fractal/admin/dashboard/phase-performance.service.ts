@@ -206,6 +206,43 @@ function calcRecencyWeight(dates: Date[], now: Date): number {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// PHASE DETECTION (Simplified, inline)
+// ═══════════════════════════════════════════════════════════════
+
+function detectPhaseSimple(closes: number[]): PhaseType {
+  if (closes.length < 50) return 'UNKNOWN';
+  
+  const last = closes[closes.length - 1];
+  const ma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+  const ma50 = closes.slice(-50).reduce((a, b) => a + b, 0) / 50;
+  
+  // Simple phase detection based on MA relationships
+  const aboveMa20 = last > ma20;
+  const aboveMa50 = last > ma50;
+  const ma20AboveMa50 = ma20 > ma50;
+  
+  // Calculate momentum (20-day ROC)
+  const roc20 = (last - closes[closes.length - 21]) / closes[closes.length - 21];
+  
+  if (aboveMa20 && aboveMa50 && ma20AboveMa50 && roc20 > 0.05) {
+    return 'MARKUP';
+  }
+  if (!aboveMa20 && !aboveMa50 && !ma20AboveMa50 && roc20 < -0.05) {
+    return 'MARKDOWN';
+  }
+  if (aboveMa50 && !ma20AboveMa50 && roc20 < 0) {
+    return 'DISTRIBUTION';
+  }
+  if (!aboveMa50 && ma20AboveMa50 && roc20 > 0) {
+    return 'RECOVERY';
+  }
+  if (!aboveMa20 && roc20 < -0.10) {
+    return 'CAPITULATION';
+  }
+  return 'ACCUMULATION';
+}
+
+// ═══════════════════════════════════════════════════════════════
 // SERVICE
 // ═══════════════════════════════════════════════════════════════
 
