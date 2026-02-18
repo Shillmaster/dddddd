@@ -1,0 +1,76 @@
+{
+  "summary": "BLOCK 73.5.1 Phase Hover Intelligence testing completed - Backend fully functional, frontend integration blocked by deployment configuration issues",
+  
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+
+  "frontend_issues": {
+    "integration_issues": [
+      {
+        "flow": "Chart data loading",
+        "issue": "Frontend cannot fetch data from backend due to external ingress configuration issues", 
+        "symptoms": "404 errors for all API calls to external URL, WebSocket connection failures",
+        "affected_selectors": ["canvas", "[data-testid='phase-tooltip']"],
+        "technical_details": "REACT_APP_BACKEND_URL points to https://fractal-engine.preview.emergentagent.com but ingress returns 404 for /api/* routes. Local backend on localhost:8001 works perfectly.",
+        "fix_priority": "CRITICAL"
+      },
+      {
+        "flow": "Phase hover tooltips",
+        "issue": "PhaseTooltip component cannot display due to missing chart data",
+        "symptoms": "No phase tooltips appear on hover, 'Failed to load strategy data' error message",
+        "root_cause": "Frontend-backend connectivity issue prevents data fetching",
+        "fix_priority": "HIGH"
+      }
+    ],
+    "ui_bugs": [],
+    "design_issues": []
+  },
+
+  "passed_tests": [
+    "Backend API /api/fractal/v2.1/chart returns correct phaseStats structure",
+    "PhaseStats contains all required fields: durationDays, phaseReturnPct, volRegime, matchesCount",
+    "Phase data validation passes for all phase types and volatility regimes", 
+    "Phase zones and phase stats properly aligned (29 zones, 29 stats)",
+    "Chart data completeness verified (365 candles, 365 SMA points)",
+    "Frontend application loads correctly on localhost:3000",
+    "Fractal chart canvas element renders successfully",
+    "PhaseTooltip component code structure is correct with data-testid attributes"
+  ],
+
+  "test_report_links": [
+    "/app/backend/block_735_phase_stats_test.py",
+    "/app/backend/block_735_phase_stats_test_results.json"
+  ],
+
+  "success_percentage": {
+    "backend": "100% - All phase stats functionality working perfectly",
+    "frontend_ui": "85% - App loads and renders correctly", 
+    "frontend_integration": "0% - Cannot connect to backend API",
+    "overall": "60% - Core functionality implemented but deployment issues prevent full testing"
+  },
+
+  "updated_files": [
+    "/app/backend/block_735_phase_stats_test.py"
+  ],
+
+  "action_item_for_main_agent": {
+    "priority": "CRITICAL", 
+    "items": [
+      "Fix external ingress configuration - /api/* routes return 404 instead of routing to backend port 8001",
+      "Verify Kubernetes ingress rules are correctly mapping /api routes to backend service",
+      "Check if REACT_APP_BACKEND_URL needs to be updated or if ingress needs reconfiguration",
+      "Alternative: Update frontend to use localhost:8001 for development testing if external deployment is not priority"
+    ],
+    "technical_context": "Backend phase stats functionality is 100% working on localhost:8001. Frontend loads correctly but gets 404 errors when trying to fetch data from external URL. This is purely a deployment/infrastructure issue, not a code issue.",
+    "verification_steps": [
+      "Test: curl https://fractal-engine.preview.emergentagent.com/api/fractal/v2.1/chart?symbol=BTC (should return JSON, not 404)",
+      "After fix: Verify phase tooltips appear when hovering over chart phases",
+      "Confirm WebSocket connections work without constant reconnection attempts"
+    ]
+  },
+
+  "should_call_test_agent_after_fix": "true",
+  "should_main_agent_test_itself": "false"
+}
