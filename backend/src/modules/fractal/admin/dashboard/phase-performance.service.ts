@@ -462,8 +462,9 @@ export class PhasePerformanceService {
       return this.buildEmptyResponse(query, fromDate, toDate, ['NO_CANDLE_DATA']);
     }
     
-    const closes = candles.map(c => c.c);
-    const timestamps = candles.map(c => c.t);
+    // Extract closes and timestamps from canonical format
+    const closes = candles.map(c => c.ohlcv.c);
+    const timestamps = candles.map(c => c.ts.getTime());
     
     // Group candles by detected phase
     const phaseData: Map<PhaseType, {
