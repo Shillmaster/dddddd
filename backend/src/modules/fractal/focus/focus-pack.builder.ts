@@ -23,6 +23,8 @@ import {
   DistributionSeries,
   FocusPackDiagnostics,
   PrimarySelection,
+  NormalizedSeries,
+  AxisMode,
   getFocusTier,
 } from './focus.types.js';
 import { selectPrimaryMatch } from '../match/primary-selector.service.js';
