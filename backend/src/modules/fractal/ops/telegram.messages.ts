@@ -17,6 +17,7 @@ type DailyRunSummary = {
     rebuild: { success?: boolean };
     alerts?: { success?: boolean; sent?: number; blocked?: number; quotaUsed?: number; quotaMax?: number };
     audit: { success?: boolean };
+    memory?: { success?: boolean; written?: number; resolved?: number };
   };
   health: { level: 'HEALTHY' | 'WATCH' | 'ALERT' | 'CRITICAL'; reasons: string[] };
   reliability: { badge: string; score: number };
@@ -33,6 +34,10 @@ type DailyRunSummary = {
     blocked: number;
     quotaUsed: number;
     quotaMax: number;
+  };
+  memory?: {
+    snapshotsWritten: number;
+    outcomesResolved: number;
   };
 };
 
