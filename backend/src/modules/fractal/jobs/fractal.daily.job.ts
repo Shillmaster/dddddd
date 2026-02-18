@@ -71,6 +71,11 @@ export interface DailyJobResult {
     quotaUsed: number;
     quotaMax: number;
   };
+  // BLOCK 75: Memory Layer
+  memory: {
+    snapshotsWritten: number;
+    outcomesResolved: number;
+  };
   errors: string[];
 }
 
