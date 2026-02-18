@@ -8,6 +8,7 @@
  */
 
 import React, { useRef, useEffect } from 'react';
+import { InfoTooltip, FRACTAL_TOOLTIPS } from '../InfoTooltip';
 
 const PRESETS = ['CONSERVATIVE', 'BALANCED', 'AGGRESSIVE'];
 const HORIZONS = ['7d', '14d', '30d'];
@@ -146,9 +147,12 @@ export default function DivergenceMatrix({ summary, selectedPreset, selectedHori
   };
 
   return (
-    <div>
-      <h3 style={styles.title}>Divergence Matrix</h3>
-      <p style={styles.subtitle}>Click cell to select</p>
+    <div data-testid="divergence-matrix">
+      <div style={styles.header}>
+        <h3 style={styles.title}>Divergence Matrix</h3>
+        <InfoTooltip {...FRACTAL_TOOLTIPS.divergenceMatrix} severity="info" />
+      </div>
+      <p style={styles.subtitle}>Кликните по ячейке для выбора</p>
       <canvas
         ref={canvasRef}
         style={styles.canvas}
@@ -157,15 +161,15 @@ export default function DivergenceMatrix({ summary, selectedPreset, selectedHori
       <div style={styles.legend}>
         <div style={styles.legendItem}>
           <div style={{ ...styles.legendDot, backgroundColor: '#dcfce7' }} />
-          <span>Shadow +</span>
+          <span>Shadow лучше</span>
         </div>
         <div style={styles.legendItem}>
           <div style={{ ...styles.legendDot, backgroundColor: '#fef2f2' }} />
-          <span>Active +</span>
+          <span>Active лучше</span>
         </div>
         <div style={styles.legendItem}>
           <div style={{ ...styles.legendDot, backgroundColor: '#f8fafc' }} />
-          <span>Neutral</span>
+          <span>Нейтрально</span>
         </div>
       </div>
     </div>
@@ -173,8 +177,14 @@ export default function DivergenceMatrix({ summary, selectedPreset, selectedHori
 }
 
 const styles = {
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 4
+  },
   title: {
-    margin: '0 0 4px 0',
+    margin: 0,
     fontSize: 14,
     fontWeight: 600,
     color: '#0f172a'
