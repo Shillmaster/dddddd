@@ -572,7 +572,8 @@ export class PhasePerformanceService {
         role,
         from: fromDate.toISOString().slice(0, 10),
         to: toDate.toISOString().slice(0, 10),
-        resolvedCount
+        resolvedCount,
+        minSamplesForTrust: TIER_SAMPLE_THRESHOLDS[tier].OK
       },
       global: globalStats,
       phases,
