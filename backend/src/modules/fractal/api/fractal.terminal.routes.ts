@@ -49,9 +49,9 @@ import {
 } from '../admin/dashboard/phase-performance.service.js';
 import {
   getAdaptiveWeightingService,
-  type HorizonStackItem,
-  type ConsensusResult74,
-  type VolRegime,
+  HorizonStackItem,
+  ConsensusResult74,
+  VolRegime,
 } from '../consensus/index.js';
 
 // ═══════════════════════════════════════════════════════════════
