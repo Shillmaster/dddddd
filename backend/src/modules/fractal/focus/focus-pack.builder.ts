@@ -590,4 +590,58 @@ function buildNormalizedSeries(
   };
 }
 
+// ═══════════════════════════════════════════════════════════════
+// BLOCK 73.2 — DIVERGENCE METRICS BUILDER
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Build divergence metrics between synthetic forecast and primary match replay
+ */
+function buildDivergenceMetrics(
+  forecast: ForecastPack,
+  primaryMatch: any,
+  basePrice: number,
+  horizonDays: number,
+  tier: 'TIMING' | 'TACTICAL' | 'STRUCTURE',
+  mode: AxisMode
+): DivergenceMetrics {
+  // Get synthetic path (forecast central trajectory)
+  const syntheticPath = forecast.path || [];
+  
+  // Get replay path from primary match
+  let replayPath: number[] = [];
+  if (primaryMatch?.aftermathNormalized?.length) {
+    // Convert normalized returns to prices
+    replayPath = primaryMatch.aftermathNormalized.map((r: number) => basePrice * (1 + r));
+  }
+  
+  // If no replay data, return empty metrics
+  if (replayPath.length === 0 || syntheticPath.length === 0) {
+    return {
+      horizonDays,
+      mode,
+      rmse: 0,
+      mape: 0,
+      maxAbsDev: 0,
+      terminalDelta: 0,
+      directionalMismatch: 0,
+      corr: 1,
+      score: 100,
+      grade: 'A',
+      flags: [],
+      samplePoints: 0,
+    };
+  }
+  
+  // Calculate divergence using the service
+  return calculateDivergence(
+    syntheticPath,
+    replayPath,
+    basePrice,
+    horizonDays,
+    tier,
+    mode
+  );
+}
+
 // Additional helpers already defined above
