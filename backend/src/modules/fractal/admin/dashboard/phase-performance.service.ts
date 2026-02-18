@@ -704,28 +704,32 @@ export class PhasePerformanceService {
   
   private buildPhaseStats(
     phaseData: Map<PhaseType, { returns: number[]; dates: Date[]; divergenceScores: number[] }>,
-    now: Date
+    now: Date,
+    tier: Tier  // Added tier parameter
   ): PhaseStats[] {
     const phases: PhaseStats[] = [];
+    const tailThreshold = TIER_TAIL_THRESHOLD[tier];
     
     for (const [phaseType, data] of phaseData.entries()) {
       if (phaseType === 'UNKNOWN') continue;
       
       const stats = this.calcStats(data.returns, data.dates);
-      const sampleQuality = getSampleQuality(data.returns.length);
+      const sampleQuality = getSampleQuality(data.returns.length, tier); // Tier-aware
       const avgDivergenceScore = mean(data.divergenceScores);
       const recencyWeight = calcRecencyWeight(data.dates, now);
       
+      // INSTITUTIONAL SCORING with tier awareness
       const score = this.calcPhaseScore({
         hitRate: stats.hitRate,
         expectancy: stats.expectancy,
         sharpe: stats.sharpe,
-        profitFactor: stats.profitFactor,
-        maxDD: stats.maxDD,
-        avgDivergenceScore
-      }, sampleQuality);
+        p10: stats.p10,
+        avgDivergenceScore,
+        recencyWeight
+      }, tier, sampleQuality);
       
-      const grade = calcGrade(score);
+      // Grade with sample-based caps
+      const grade = calcGrade(score, sampleQuality);
       
       // Generate warnings
       const phaseWarnings: string[] = [];
