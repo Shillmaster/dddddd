@@ -197,3 +197,21 @@ Response:
 3. Phase Strength Indicator in terminal header
 4. Production simulation testing
 
+## Session: 2026-02-18 (continued)
+
+### Deployment Verification (COMPLETED)
+- Repository cloned from https://github.com/Shillmaster/dcdcdcd
+- Backend: Python FastAPI proxy (8001) → TypeScript Fractal backend (8002)
+- Frontend: React with Tailwind CSS (3000)
+- MongoDB: Local instance
+- Admin Panel: /admin/fractal - Fractal V2.1 Institutional Panel
+
+### All BLOCK 74 Features Verified Working:
+- BLOCK 74.1: Horizon Stack View (6 horizons with adaptive weights)
+- BLOCK 74.2: Institutional Consensus Panel
+- BLOCK 74.3: Adaptive Weighting 2.0 with Structural Dominance
+  - Tier Weight Distribution bars
+  - Regime Impact display
+  - Structural Lock status
+  - Vote breakdown per horizon
+
