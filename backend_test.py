@@ -37,13 +37,17 @@ class Block75MemoryTester:
     def make_request(self, method: str, endpoint: str, params: Dict = None, data: Dict = None) -> tuple[bool, Any, str]:
         """Make HTTP request and return (success, response_data, error_message)"""
         url = f"{self.base_url}/{endpoint}"
-        headers = {'Content-Type': 'application/json'}
         
         try:
             if method == 'GET':
-                response = requests.get(url, params=params, headers=headers, timeout=30)
+                response = requests.get(url, params=params, timeout=30)
             elif method == 'POST':
-                response = requests.post(url, params=params, json=data, headers=headers, timeout=30)
+                if data is not None:
+                    headers = {'Content-Type': 'application/json'}
+                    response = requests.post(url, params=params, json=data, headers=headers, timeout=30)
+                else:
+                    # POST without body - don't set Content-Type header
+                    response = requests.post(url, params=params, timeout=30)
             else:
                 return False, None, f"Unsupported method: {method}"
 
