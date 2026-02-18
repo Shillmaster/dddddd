@@ -1,17 +1,17 @@
 /**
- * FRACTAL RESEARCH TERMINAL v5
- * BLOCK 70.2 STEP 2 — Real Horizon Binding
+ * FRACTAL RESEARCH TERMINAL v6
+ * STEP A — Canvas Refactor (3 Modes)
  * 
- * Features:
- * - HorizonSelector controls entire terminal state
- * - useFocusPack hook for focus-specific data
- * - Full redraw on horizon change
- * - Tier-based UI (TIMING/TACTICAL/STRUCTURE)
+ * Modes:
+ * - Price: Synthetic model + probability corridor
+ * - Replay: Historical analogue + aftermath
+ * - Hybrid: Synthetic vs Replay dual projection
  */
 
 import React, { useState, useEffect } from 'react';
 import { FractalMainChart } from '../components/fractal/chart/FractalMainChart';
 import { FractalOverlaySection } from '../components/fractal/sections/FractalOverlaySection';
+import { FractalHybridChart } from '../components/fractal/chart/FractalHybridChart';
 import { StrategyPanel } from '../components/fractal/sections/StrategyPanel';
 import ForwardPerformancePanel from '../components/fractal/ForwardPerformancePanel';
 import { VolatilityCard } from '../components/fractal/VolatilityCard';
@@ -23,13 +23,14 @@ import { useFocusPack, HORIZONS, getTierColor, getTierLabel } from '../hooks/use
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
 // ═══════════════════════════════════════════════════════════════
-// CHART MODE SWITCHER
+// CHART MODE SWITCHER (3 MODES: Price / Replay / Hybrid)
 // ═══════════════════════════════════════════════════════════════
 
 const ChartModeSwitcher = ({ mode, onModeChange }) => {
   const modes = [
-    { id: 'price', label: 'Price Chart', icon: '📈' },
-    { id: 'fractal', label: 'Fractal Overlay', icon: '📐' },
+    { id: 'price', label: 'Price', desc: 'Synthetic Model' },
+    { id: 'replay', label: 'Replay', desc: 'Historical' },
+    { id: 'hybrid', label: 'Hybrid', desc: 'Dual View' },
   ];
   
   return (
@@ -38,15 +39,15 @@ const ChartModeSwitcher = ({ mode, onModeChange }) => {
         <button
           key={m.id}
           onClick={() => onModeChange(m.id)}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-2 ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors flex flex-col items-center ${
             mode === m.id
               ? 'bg-white text-slate-900 shadow-sm'
-              : 'text-slate-600 hover:text-slate-800 hover:bg-slate-50'
+              : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
           }`}
           data-testid={`mode-${m.id}`}
         >
-          <span>{m.icon}</span>
-          {m.label}
+          <span className="font-semibold">{m.label}</span>
+          <span className="text-[10px] text-slate-400">{m.desc}</span>
         </button>
       ))}
     </div>
