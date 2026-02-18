@@ -51,11 +51,23 @@ export async function tgSendMessage(
 
 /**
  * Get Telegram config from environment
+ * FRACTAL_ALERTS_ENABLED must be true for alerts to send
  */
 export function getTelegramConfig() {
+  const alertsEnabled = process.env.FRACTAL_ALERTS_ENABLED === 'true';
+  const hasCredentials = !!(process.env.TG_BOT_TOKEN && process.env.TG_ADMIN_CHAT_ID);
+  
   return {
     token: process.env.TG_BOT_TOKEN || '',
     chatId: process.env.TG_ADMIN_CHAT_ID || '',
-    enabled: !!(process.env.TG_BOT_TOKEN && process.env.TG_ADMIN_CHAT_ID)
+    alertsEnabled,
+    enabled: alertsEnabled && hasCredentials
   };
+}
+
+/**
+ * Check if alerts can be sent (for guard in adapter)
+ */
+export function isAlertsEnabled(): boolean {
+  return process.env.FRACTAL_ALERTS_ENABLED === 'true';
 }
