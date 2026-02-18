@@ -1,89 +1,99 @@
-# Fractal Terminal PRD — BLOCK 73.1.1 Complete
+# Fractal Terminal PRD — BLOCK 73.2 Complete
 
 ## What's Been Implemented
 
-### BLOCK 73.1.1 — STRUCTURE % MODE (Y-Axis Normalization) ✅ (Feb 18, 2026)
+### BLOCK 73.2 — Divergence Engine ✅ (Feb 18, 2026)
 
-**Цель:** На горизонтах 180D/365D переключить Y-axis в % от NOW для читаемости структуры.
+**Цель:** Оценивать расхождение между Synthetic и Replay, не просто показывать две линии.
 
-**Проблема до фикса:**
-- 365D price scale показывал raw $ → огромный диапазон
-- BTC history сжимала forecast в "линейку"
-- Структура не читалась
+**Backend (`divergence.service.ts`):**
+- **RMSE**: Root mean square error (%)
+- **MAPE**: Mean absolute % error
+- **MaxAbsDev**: Maximum absolute deviation (%)
+- **TerminalDelta**: End-point divergence (%)
+- **DirectionalMismatch**: % of days with opposite direction
+- **Correlation**: Pearson correlation on daily returns
 
-**Решение (backend-driven):**
-1. Добавлен тип `NormalizedSeries` в `focus.types.ts`:
-   ```ts
-   interface NormalizedSeries {
-     mode: 'RAW' | 'PERCENT';
-     basePrice: number;
-     rawPath: number[];
-     percentPath: number[];
-     ...
-     yRange: { minPercent, maxPercent, minPrice, maxPrice }
-   }
-   ```
+**Composite Score (0-100):**
+- Tier-specific weights (TIMING/TACTICAL/STRUCTURE)
+- TIMING: больше terminalDelta + dirMismatch
+- STRUCTURE: больше corr + rmse
 
-2. Backend (`focus-pack.builder.ts`) определяет mode:
-   - TIMING/TACTICAL (7d-90d) → `mode: RAW`
-   - STRUCTURE (180d-365d) → `mode: PERCENT`
+**Grades:**
+- A: ≥85 (green)
+- B: 70-84 (lime)
+- C: 55-69 (amber)
+- D: 40-54 (orange)
+- F: <40 (red)
 
-3. Frontend (`FractalChartCanvas.jsx`):
-   - Читает `normalizedSeries.mode`
-   - Создаёт % Y-scale для STRUCTURE
-   - Рисует NOW reference line (зелёная пунктирная)
-   - Y-axis labels: `+224%`, `-54%` вместо `$132,671`
+**Warning Flags:**
+- `HIGH_DIVERGENCE` — RMSE > 15%
+- `LOW_CORR` — correlation < 0.3
+- `TERM_DRIFT` — terminal delta > 20%
+- `DIR_MISMATCH` — direction mismatch > 55%
+- `PERFECT_MATCH` — RMSE ≤ 1%
 
-**Результат:**
-- 365D: Y-axis теперь `+224%` to `-124%`
-- NOW reference line видна
-- Forecast читаемый: `+99.9%`
-- P95 Tail Risk виден
-- История BTC структурно понятна
+**Frontend (`FractalHybridChart.jsx`):**
+- Grade badge (B (73), D (49), etc.)
+- RMSE display
+- Details row: Correlation, Terminal Δ, Dir Mismatch, Sample
+- Warning chips (orange badges)
+
+**Results:**
+- 30D: Score 73 (B), RMSE 3.0% — хорошее совпадение
+- 365D: Score 49 (D), RMSE 39.2%, flag: "High Divergence" — ожидаемо для long horizon
+
+### BLOCK 73.1.1 — STRUCTURE % MODE ✅
+- Y-axis в % для 180D/365D horizons
+- NOW reference line
 
 ### BLOCK 73.1 — Primary Match Selection Engine ✅
-
-- Weighted scoring engine для выбора Primary Match
-- 5 компонентов: similarity, volatility, stability, outcome quality, recency
-- Веса адаптируются под tier горизонта
-
-### Previous Implementations ✅
-- STEP A: Canvas Refactor (3 Modes: Price/Replay/Hybrid)
-- BLOCK 72: 7D Insight Block
-- 14D+ Spline Smoothing
+- Weighted scoring для выбора Primary Match
+- 5 компонентов scoring
 
 ---
 
 ## Prioritized Backlog
 
 ### P1 (Next)
-- [ ] **BLOCK 73.2 — Divergence Engine** — Calculate and display `Divergence Score`
-- [ ] **14D Continuity Fix** — Убрать визуальный обрыв 7→14
+- [ ] **BLOCK 73.3 — 14D Continuity Fix** — убрать визуальный обрыв линии 7→14
 
 ### P2
-- [ ] Tooltip component scores (институциональная прозрачность)
+- [ ] Tooltip component scores
+- [ ] Auto-penalty в sizing stack на основе divergence
 - [ ] BLOCK 74 — Multi-Horizon Intelligence Stack
-- [ ] BLOCK 75 — Memory & Self-Validation Layer
 
 ---
 
 ## Technical Notes
 
-### Files Changed (BLOCK 73.1.1)
+### Files Created/Updated (BLOCK 73.2)
 **Backend:**
-- `/app/backend/src/modules/fractal/focus/focus.types.ts` — Added `NormalizedSeries`, `AxisMode`
-- `/app/backend/src/modules/fractal/focus/focus-pack.builder.ts` — Added `buildNormalizedSeries()`
+- `/app/backend/src/modules/fractal/engine/divergence.service.ts` — NEW
+- `/app/backend/src/modules/fractal/focus/focus.types.ts` — Added `DivergenceMetrics`
+- `/app/backend/src/modules/fractal/focus/focus-pack.builder.ts` — Integration
 
 **Frontend:**
-- `/app/frontend/src/components/fractal/chart/FractalChartCanvas.jsx` — % mode rendering
-- `/app/frontend/src/components/fractal/chart/FractalMainChart.jsx` — Pass normalizedSeries
-- `/app/frontend/src/components/fractal/chart/FractalHybridChart.jsx` — Pass normalizedSeries
+- `/app/frontend/src/components/fractal/chart/FractalHybridChart.jsx` — Updated panel
 
-### Axis Mode Logic
-```js
-const axisMode = normalizedSeries?.mode === 'PERCENT' ? 'PERCENT' : 'PRICE';
+### API Response Structure
+```json
+{
+  "focusPack": {
+    "divergence": {
+      "score": 73,
+      "grade": "B",
+      "rmse": 3.04,
+      "corr": 0.556,
+      "terminalDelta": 0,
+      "directionalMismatch": 37.9,
+      "flags": [],
+      "samplePoints": 30
+    }
+  }
+}
 ```
 
 ### Testing
-- Backend API verified (365D returns `mode: PERCENT`, 30D returns `mode: RAW`)
-- Screenshots: 30D ($), 180D (%), 365D (%) — all working correctly
+- Backend API: curl verified (30D: B/73, 365D: F/34)
+- Screenshots: 30D and 365D Hybrid mode working correctly
