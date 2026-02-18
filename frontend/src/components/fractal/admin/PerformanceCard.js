@@ -1,6 +1,6 @@
 /**
- * BLOCK 50 — Performance Card (Improved UI)
- * Shows performance windows (30/60/90 day) with tooltips
+ * BLOCK 50 — Performance Card
+ * English: all titles, metric names, labels
  */
 
 import React from 'react';
@@ -14,12 +14,10 @@ const getSharpeColor = (val) => {
   return 'text-red-600';
 };
 
-const getSharpeLabel = (val) => {
-  if (val >= 1.5) return { text: 'Отлично', icon: Award };
-  if (val >= 1.0) return { text: 'Хорошо', icon: TrendingUp };
-  if (val >= 0.5) return { text: 'Приемлемо', icon: Target };
-  if (val >= 0) return { text: 'Слабо', icon: TrendingDown };
-  return { text: 'Плохо', icon: TrendingDown };
+const getSharpeIcon = (val) => {
+  if (val >= 1.0) return TrendingUp;
+  if (val >= 0.5) return Target;
+  return TrendingDown;
 };
 
 export function PerformanceCard({ performance }) {
@@ -49,7 +47,7 @@ export function PerformanceCard({ performance }) {
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Performance Windows</h3>
+          <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">PERFORMANCE WINDOWS</h3>
           <InfoTooltip {...FRACTAL_TOOLTIPS.performance} placement="right" />
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50">
@@ -58,18 +56,11 @@ export function PerformanceCard({ performance }) {
         </div>
       </div>
       
-      {/* Description */}
-      <div className="mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
-        <p className="text-sm text-gray-600">
-          Историческая эффективность системы за разные периоды. Sharpe &gt;1.0 считается хорошим результатом.
-        </p>
-      </div>
-      
       {/* Column Headers */}
       <div className="grid grid-cols-4 gap-2 mb-3 px-3">
-        <div className="text-xs font-bold text-gray-400 uppercase">Период</div>
+        <div className="text-xs font-bold text-gray-400 uppercase">Window</div>
         <div className="text-xs font-bold text-gray-400 uppercase text-center">Sharpe</div>
-        <div className="text-xs font-bold text-gray-400 uppercase text-center">Max DD</div>
+        <div className="text-xs font-bold text-gray-400 uppercase text-center">MaxDD</div>
         <div className="text-xs font-bold text-gray-400 uppercase text-center">Hit Rate</div>
       </div>
       
@@ -81,8 +72,7 @@ export function PerformanceCard({ performance }) {
           { key: 'd90', label: '90 Day', data: windows.d90 },
         ].map(({ key, label, data }) => {
           if (!data) return null;
-          const sharpeInfo = getSharpeLabel(data.sharpe);
-          const SharpeIcon = sharpeInfo.icon;
+          const SharpeIcon = getSharpeIcon(data.sharpe);
           
           return (
             <div 
@@ -127,24 +117,6 @@ export function PerformanceCard({ performance }) {
             </div>
           );
         })}
-      </div>
-      
-      {/* Legend */}
-      <div className="mt-5 pt-4 border-t border-gray-100">
-        <div className="grid grid-cols-3 gap-4 text-center">
-          <div>
-            <p className="text-xs text-gray-400 uppercase mb-1">Sharpe</p>
-            <p className="text-xs text-gray-500">Доходность/риск</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 uppercase mb-1">Max DD</p>
-            <p className="text-xs text-gray-500">Макс. просадка</p>
-          </div>
-          <div>
-            <p className="text-xs text-gray-400 uppercase mb-1">Hit Rate</p>
-            <p className="text-xs text-gray-500">% прибыльных</p>
-          </div>
-        </div>
       </div>
     </div>
   );
