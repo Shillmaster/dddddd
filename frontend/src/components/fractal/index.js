@@ -13,3 +13,10 @@ export { useFractalTerminal } from "./hooks/useFractalTerminal";
 
 // P1.4 — Volatility Regime
 export { VolatilityCard } from "./VolatilityCard";
+
+// P1.6 — Sizing Breakdown
+export { SizingBreakdown } from "./SizingBreakdown";
+
+// BLOCK 74 — Multi-Horizon Intelligence Stack
+export { HorizonStackView } from "./HorizonStackView";
+export { ConsensusPanel } from "./ConsensusPanel";
