@@ -53,10 +53,12 @@ function mapToSupportedWindow(windowLen: number): number {
 
 /**
  * Build complete FocusPack for a given horizon focus
+ * BLOCK 73.5.2: Added phaseId parameter for phase filtering
  */
 export async function buildFocusPack(
   symbol: string,
-  focus: HorizonKey
+  focus: HorizonKey,
+  phaseId?: string | null
 ): Promise<FocusPack> {
   const cfg = HORIZON_CONFIG[focus];
   const tier = getFocusTier(focus);
@@ -88,9 +90,45 @@ export async function buildFocusPack(
     console.error('[FocusPack] Match error:', err);
   }
   
-  // Build overlay pack from raw matches
+  // BLOCK 73.5.2: Filter matches by phase if phaseId provided
+  let filteredMatches = matchResult?.matches || [];
+  let phaseFilter: any = null;
+  
+  if (phaseId) {
+    // Parse phaseId format: "PHASE_FROM_TO" or "PHASENAME_YYYY-MM-DD_YYYY-MM-DD"
+    const parts = phaseId.split('_');
+    if (parts.length >= 3) {
+      const from = parts[parts.length - 2]; // Second to last
+      const to = parts[parts.length - 1];   // Last
+      
+      if (from && to) {
+        const fromTs = new Date(from).getTime();
+        const toTs = new Date(to).getTime();
+        
+        // Filter matches that fall within phase date range
+        const originalCount = filteredMatches.length;
+        filteredMatches = filteredMatches.filter((m: any) => {
+          const matchTs = new Date(m.date || m.id).getTime();
+          return matchTs >= fromTs && matchTs <= toTs;
+        });
+        
+        phaseFilter = {
+          phaseId,
+          from,
+          to,
+          originalMatchCount: originalCount,
+          filteredMatchCount: filteredMatches.length,
+          active: true
+        };
+        
+        console.log(`[FocusPack] Phase filter: ${phaseId}, matches: ${originalCount} -> ${filteredMatches.length}`);
+      }
+    }
+  }
+  
+  // Build overlay pack from filtered matches
   const overlay = buildOverlayPackFromMatches(
-    matchResult?.matches || [], 
+    filteredMatches, 
     allCandles, 
     allCloses, 
     allTimestamps,
