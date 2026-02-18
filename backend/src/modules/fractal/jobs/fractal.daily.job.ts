@@ -381,6 +381,7 @@ export class FractalDailyJobService {
       snapshot: snapshotResult,
       resolve: resolveResult,
       equity: { rebuilt: equityRebuilt },
+      alerts: alertsResult,
       errors
     };
   }
