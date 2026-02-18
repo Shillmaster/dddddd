@@ -1,10 +1,12 @@
 /**
  * BLOCK 70.2 STEP 2 — useFocusPack Hook
+ * BLOCK 73.5.2 — Phase Filter Support
  * 
  * Real horizon binding for frontend.
  * - AbortController for request cancellation
  * - Caches last good payload
  * - Loading/error states
+ * - Phase filtering support
  */
 
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -41,19 +43,22 @@ export const getTierLabel = (tier) => {
 
 /**
  * useFocusPack - Fetches focus-specific terminal data
+ * BLOCK 73.5.2: Added phaseId parameter for phase filtering
  * 
  * @param {string} symbol - Trading symbol (BTC)
  * @param {string} focus - Horizon focus ('7d'|'14d'|'30d'|'90d'|'180d'|'365d')
- * @returns {{ data, loading, error, refetch }}
+ * @param {string|null} phaseId - Optional phase filter
+ * @returns {{ data, loading, error, refetch, setPhaseId }}
  */
-export function useFocusPack(symbol = 'BTC', focus = '30d') {
+export function useFocusPack(symbol = 'BTC', focus = '30d', initialPhaseId = null) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [phaseId, setPhaseId] = useState(initialPhaseId);
   const abortControllerRef = useRef(null);
   const cacheRef = useRef({}); // Cache by focus key
   
-  const fetchFocusPack = useCallback(async () => {
+  const fetchFocusPack = useCallback(async (overridePhaseId) => {
     // Abort previous request
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -62,9 +67,11 @@ export function useFocusPack(symbol = 'BTC', focus = '30d') {
     abortControllerRef.current = new AbortController();
     const { signal } = abortControllerRef.current;
     
-    // Check cache first
-    const cacheKey = `${symbol}_${focus}`;
-    if (cacheRef.current[cacheKey]) {
+    const currentPhaseId = overridePhaseId !== undefined ? overridePhaseId : phaseId;
+    
+    // Check cache first (only for non-filtered requests)
+    const cacheKey = `${symbol}_${focus}_${currentPhaseId || 'all'}`;
+    if (cacheRef.current[cacheKey] && !currentPhaseId) {
       setData(cacheRef.current[cacheKey]);
       // Still fetch fresh data in background
     }
@@ -73,10 +80,12 @@ export function useFocusPack(symbol = 'BTC', focus = '30d') {
     setError(null);
     
     try {
-      const response = await fetch(
-        `${API_BASE}/api/fractal/v2.1/focus-pack?symbol=${symbol}&focus=${focus}`,
-        { signal }
-      );
+      let url = `${API_BASE}/api/fractal/v2.1/focus-pack?symbol=${symbol}&focus=${focus}`;
+      if (currentPhaseId) {
+        url += `&phaseId=${encodeURIComponent(currentPhaseId)}`;
+      }
+      
+      const response = await fetch(url, { signal });
       
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
@@ -106,7 +115,13 @@ export function useFocusPack(symbol = 'BTC', focus = '30d') {
     } finally {
       setLoading(false);
     }
-  }, [symbol, focus]);
+  }, [symbol, focus, phaseId]);
+  
+  // BLOCK 73.5.2: Refetch with new phaseId
+  const filterByPhase = useCallback((newPhaseId) => {
+    setPhaseId(newPhaseId);
+    fetchFocusPack(newPhaseId);
+  }, [fetchFocusPack]);
   
   useEffect(() => {
     fetchFocusPack();
@@ -118,11 +133,20 @@ export function useFocusPack(symbol = 'BTC', focus = '30d') {
     };
   }, [fetchFocusPack]);
   
+  // Reset phaseId when focus changes
+  useEffect(() => {
+    setPhaseId(null);
+  }, [focus]);
+  
   return {
     data,
     loading,
     error,
     refetch: fetchFocusPack,
+    // BLOCK 73.5.2: Phase filter controls
+    phaseId,
+    setPhaseId: filterByPhase,
+    phaseFilter: data?.phaseFilter,
     // Computed helpers
     meta: data?.meta,
     overlay: data?.overlay,
