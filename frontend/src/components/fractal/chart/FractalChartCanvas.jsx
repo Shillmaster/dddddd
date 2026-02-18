@@ -177,9 +177,9 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', width, heig
     // anchor at last candle x
     const xAnchor = x(candles.length - 1);
     
-    // BLOCK 72.2: Choose forecast renderer based on focus
+    // BLOCK 72.3: Choose forecast renderer based on focus
     if (renderMode === 'CAPSULE_7D' && forecast?.distribution7d) {
-      // 7D: Draw compact directional arrow (no trajectory, no capsule)
+      // 7D: Draw compact directional arrow + insight block
       draw7dArrow(
         ctx,
         forecast.distribution7d,
@@ -188,7 +188,8 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', width, heig
         y,
         margins.top,
         margins.bottom,
-        height
+        height,
+        forecast.stats || {}
       );
     } else {
       // 14D+: Draw aftermath-driven trajectory with fan
