@@ -367,6 +367,7 @@ const FractalTerminal = () => {
                     height={420}
                     focus={focus}
                     focusPack={focusData}
+                    onPhaseFilter={setPhaseId}
                   />
                 )}
               </>
