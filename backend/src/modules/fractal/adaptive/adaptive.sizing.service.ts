@@ -29,6 +29,7 @@ export interface SizingBreakdown {
   tailRiskMod: number;        // From tail risk metrics
   reliabilityMod: number;     // From reliability health
   governanceMod: number;      // From governance overrides
+  phaseMod: number;           // BLOCK 73.7: From phase grade
   finalSize: number;          // Product of all
   sizeBeforeVol: number;      // Size before volatility clamp (for attribution)
 }
