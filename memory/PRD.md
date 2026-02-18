@@ -1,217 +1,118 @@
 # Fractal Terminal PRD
 
 ## Original Problem Statement
-Клонировать репозиторий https://github.com/Shillmaster/JJcbjee, поднять фронт, бэк и админку. Работа только с модулем Fractal.
+Self-learning institutional trading terminal for BTC. Now with Memory & Self-Validation Layer (BLOCK 75).
 
 ## Architecture
-- **Backend**: Node.js/TypeScript (Fastify) on port 8002, proxied via Python FastAPI on 8001
-- **Frontend**: React with Tailwind CSS on port 3000
-- **Database**: MongoDB (configured via MONGO_URL)
-
-## User Personas
-- Institutional traders analyzing crypto market phases
-- Quantitative analysts researching fractal patterns
-- Portfolio managers making sizing decisions
+- Backend: TypeScript Node.js (Fastify) on port 8002, proxied via Python FastAPI on 8001
+- Frontend: React + Tailwind CSS on port 3000
+- Database: MongoDB
 
 ## Core Requirements
-1. Multi-horizon fractal analysis (7D-365D)
-2. Phase detection (ACCUMULATION, MARKUP, DISTRIBUTION, MARKDOWN, RECOVERY, CAPITULATION)
-3. Match overlay with historical patterns
-4. Hybrid projection (Synthetic vs Replay)
-5. Phase-aware filtering and drilldown
-6. Phase performance attribution with grades
-7. Phase-aware position sizing
+- BTC-only focus
+- Fractal pattern matching & analysis
+- Multi-horizon consensus (7d/14d/30d/90d/180d/365d)
+- Institutional governance controls
+
+## User Personas
+1. **Institutional Trader** - Needs consensus signals, sizing recommendations, horizon analysis
+2. **Quant Researcher** - Needs raw data, pattern attribution, forward truth validation
+3. **Risk Manager** - Needs governance controls, policy audit trail, guardrails
 
 ## What's Been Implemented
 
 ### Session: 2026-02-18
 
-#### BLOCK 73.5.2 — Phase Click Drilldown (COMPLETED)
-- Backend: Фильтрация matches по типу фазы (phaseId → phaseType extraction)
-- Frontend: Клик по фазе на графике → PhaseFilterBar с контекстом фазы + Clear Filter
-- Hook: useFocusPack теперь поддерживает filterByPhase(phaseId)
+#### BLOCK 74 (Previous) — Verified Working
+- 74.1: Horizon Stack View (6 horizons with adaptive weights)
+- 74.2: Institutional Consensus Panel
+- 74.3: Adaptive Weighting 2.0 with Structural Dominance
 
-#### BLOCK 73.6 — Phase Performance Heatmap (COMPLETED)
-**Backend:**
-- Endpoint: `/api/fractal/v2.1/admin/phase-performance`
-- Service: `phase-performance.service.ts`
+#### BLOCK 75 — Memory & Self-Validation Layer ✅ COMPLETE
 
-**Institutional Scoring Formula:**
-```
-Score = 40% HitRate + 25% Expectancy + 20% Sharpe + 15% Divergence
-```
+##### 75.1 — Snapshot Persistence
+- MongoDB model: `FractalPredictionSnapshot`
+- Stores all 6 horizons × 3 presets × 2 roles = 36 snapshots/day
+- Full terminal payload preserved for replay
+- KernelDigest with direction, consensus, dominance, divergence
+- Tier weights (STRUCTURE/TACTICAL/TIMING)
+- Idempotent writes (unique index on symbol+asofDate+focus+role+preset)
 
-**Tier-Aware Sample Thresholds:**
-- TIMING: OK ≥ 20, LOW 10-19, VERY_LOW < 10
-- TACTICAL: OK ≥ 12, LOW 6-11, VERY_LOW < 6
-- STRUCTURE: OK ≥ 18, LOW 10-17, VERY_LOW < 10
+API:
+- `POST /api/fractal/v2.1/admin/memory/write-snapshots`
+- `GET /api/fractal/v2.1/admin/memory/snapshots/latest`
+- `GET /api/fractal/v2.1/admin/memory/snapshots/range`
+- `GET /api/fractal/v2.1/admin/memory/snapshots/count`
 
-**Penalties:**
-- LOW_SAMPLE: -12
-- VERY_LOW_SAMPLE: -20
-- HIGH_TAIL (P10 < threshold): -8
-- HIGH_DIVERGENCE (< 55): -8
-- LOW_RECENCY (< 0.3): -3
+##### 75.2 — Forward Truth Outcome Resolver
+- MongoDB model: `FractalPredictionOutcome`
+- Resolves matured snapshots with real price data
+- Calculates hit/miss per direction (BUY/SELL/HOLD)
+- Tier-level truth attribution (STRUCTURE/TACTICAL/TIMING hits)
+- Band hit tracking (P10-P90)
 
-**Grade Calculation with Sample Caps:**
-- A ≥ 85 (capped to C if LOW_SAMPLE, D if VERY_LOW)
-- B ≥ 70 (same caps)
-- C ≥ 55
-- D ≥ 40
-- F < 40
+API:
+- `POST /api/fractal/v2.1/admin/memory/resolve-outcomes`
+- `GET /api/fractal/v2.1/admin/memory/forward-stats`
+- `GET /api/fractal/v2.1/admin/memory/calibration`
 
-**Frontend:**
-- PhaseHeatmap.jsx with grade-colored rows
-- Global Baseline stats bar
-- Filter button integration with Phase Click Drilldown
+##### 75.3 — Attribution Service
+- Tier accuracy analysis (which tier performed best)
+- Regime-specific accuracy (CRISIS/HIGH/NORMAL/LOW)
+- Divergence impact analysis (grade → error correlation)
+- Auto-generated insights
 
-#### BLOCK 73.7 — Phase-Aware Sizing Multiplier (COMPLETED)
-**Backend:**
-- Updated `adaptive.sizing.service.ts`
-- Added phaseMod to SizingBreakdown interface
-- Added computePhaseModifier method
+API:
+- `GET /api/fractal/v2.1/admin/memory/attribution/summary`
 
-**Grade Multipliers:**
-- A: ×1.15 (boost)
-- B: ×1.05 (slight boost)
-- C: ×1.00 (neutral)
-- D: ×0.80 (reduce)
-- F: ×0.60 (significant reduction)
+##### 75.4 — Policy Governance
+- MongoDB model: `FractalPolicyProposal`
+- DRY_RUN mode for simulation
+- PROPOSE mode for creating proposals
+- APPLY mode for manual confirmation
+- Guardrails: min samples, max drift ±5%, weight normalization
 
-**Sample Quality Caps (prevent boost on uncertain data):**
-- LOW_SAMPLE: cap at ×1.00 (no boost, allow penalties)
-- VERY_LOW_SAMPLE: cap at ×0.90 (slight penalty)
+API:
+- `POST /api/fractal/v2.1/admin/governance/policy/dry-run`
+- `POST /api/fractal/v2.1/admin/governance/policy/propose`
+- `POST /api/fractal/v2.1/admin/governance/policy/apply`
+- `GET /api/fractal/v2.1/admin/governance/policy/current`
+- `GET /api/fractal/v2.1/admin/governance/policy/history`
+- `GET /api/fractal/v2.1/admin/governance/policy/pending`
 
-**Frontend:**
-- Added "Phase Grade" to FACTOR_LABELS in SizingBreakdown.jsx
+##### Cron + Telegram Integration
+- Daily job now includes MEMORY_SNAPSHOTS step
+- Writes snapshots after audit
+- Resolves matured outcomes
+- Telegram message includes memory stats: `🧠 MEMORY: wrote X | resolved Y`
+
+## Testing Status
+- Backend: 100% (11/11 endpoints working)
+- Frontend: 100% (2/2 pages working)
+- Integration: 100%
 
 ## Prioritized Backlog
 
 ### P0 (Critical)
-- [x] BLOCK 73.5.2 Phase Click Drilldown
-- [x] BLOCK 73.6 Phase Performance Heatmap (Institutional Scoring)
-- [x] BLOCK 73.7 Phase-Aware Sizing Multiplier
+- [x] BLOCK 75 — Memory & Self-Validation Layer
 
-### P1 (High Priority)
-- [ ] Integration test: Phase grade flow from API → Sizing computation
-- [ ] External Ingress routing fix for production preview domain
+### P1 (High)
+- [ ] Consensus Drift Tracker (7d history mini-chart)
+- [ ] Phase Strength Indicator in terminal header
+- [ ] Attribution UI in Admin Panel
 
-### P2 (Medium Priority)
-- [ ] Phase comparison overlay (Phase-only vs Global distribution)
-- [ ] Keyboard shortcuts (Esc to clear filter)
-- [ ] Real forward-truth data collection (resolved snapshots)
+### P2 (Medium)
+- [ ] Dominance History visualization
+- [ ] Policy Proposal review UI
+- [ ] Backtest replay from snapshots
 
-## API Documentation
-
-### Phase Performance Endpoint
-```
-GET /api/fractal/v2.1/admin/phase-performance?symbol=BTC&tier=TACTICAL&h=30
-
-Response:
-{
-  meta: { tier, minSamplesForTrust, resolvedCount },
-  global: { hitRate, avgRet, sharpe },
-  phases: [{
-    phaseName, grade, score, samples, sampleQuality,
-    hitRate, avgRet, medianRet, p10, p90, sharpe,
-    avgDivergenceScore, recencyWeight, warnings
-  }]
-}
-```
-
-## What's Been Implemented
-
-### Session: 2026-02-18 (continued)
-
-#### BLOCK 73.8 — Phase Grade Integration in Decision Kernel (COMPLETED)
-**Backend (`fractal.terminal.routes.ts`):**
-- `getPhaseGradeForCurrentPhase()` - fetches phase grade from phase-performance service
-- `computePhaseConfidenceAdjustment()` - confidence adjustment logic
-- Phase grade passed to terminal payload sizing: `phaseGrade`, `phaseSampleQuality`, `phaseScore`
-- `confidenceAdjustment` object: `basePp`, `adjustmentPp`, `finalPp`, `reason`
-- PHASE factor added to breakdown array
-
-**Confidence Adjustment Rules:**
-- Grade A + divergence < 50 → +5pp
-- Grade A → +3pp
-- Grade B + divergence < 55 → +3pp
-- Grade B → +2pp
-- Grade D → -3pp
-- Grade F → -5pp
-
-**Frontend (`SizingBreakdown.jsx`):**
-- Phase Grade badge in header with color-coded styling
-- Confidence Adjustment section with boost/penalty display
-- PHASE factor in breakdown table
-
-#### BLOCK 74 — Multi-Horizon Intelligence Stack (COMPLETED)
-
-**74.1 Horizon Stack View (Backend + Frontend):**
-- `horizonStack[]` in terminal payload with 6 horizons (7d-365d)
-- Each horizon: tier, direction, confidenceFinal, phase, divergence, tail, matches, blockers, voteWeight
-- Adaptive weighting: baseTier × regimeMod × divergenceMod
-- Frontend: `HorizonStackView.jsx` - clickable horizon rows with tier colors
-
-**74.2 Institutional Consensus (Backend + Frontend):**
-- `consensus74` object in terminal payload
-- consensusIndex (0-100), conflictLevel, votes[], conflictReasons[], resolved
-- resolved: action (BUY/SELL/HOLD), mode (TREND_FOLLOW/COUNTER_TREND/WAIT), sizeMultiplier, dominantTier
-- adaptiveMeta: regime, structuralDominance, divergencePenalties, phasePenalties, stabilityGuard
-- Frontend: `ConsensusPanel.jsx` - institutional consensus display with expandable details
-
-**74.3 Adaptive Weighting 2.0 — Hard Structural Dominance (COMPLETED):**
-
-*Desk-Grade Decision Engine with Constitutional Rules*
-
-**Core Rule:** If STRUCTURE_WEIGHT >= 55% → STRUCTURE determines direction (structuralLock=true)
-- TIMING can only affect size, NOT reverse direction
-- timingOverrideBlocked = true when timing conflicts
-
-**Regime Modifiers:**
-- CRISIS: STRUCTURE ×1.35, TACTICAL ×1.10, TIMING ×0.60
-- EXPANSION: STRUCTURE ×0.85, TACTICAL ×1.05, TIMING ×1.20
-- HIGH: STRUCTURE ×1.10, TACTICAL ×1.05, TIMING ×0.85
-- LOW: STRUCTURE ×0.90, TACTICAL ×1.00, TIMING ×1.15
-- NORMAL: all ×1.00
-
-**Penalty Modifiers:**
-- Divergence Grade: A(×1.05), B(×1.00), C(×0.90), D(×0.75), F(×0.55)
-- HIGH_DIVERGENCE flag: additional ×0.85
-- Phase Quality: A(×1.10), B(×1.05), C(×1.00), D(×0.85), F(×0.65)
-
-**New API Fields in consensus74:**
-- direction, dominance, structuralLock, timingOverrideBlocked
-- adaptiveMeta: structureWeightSum, tacticalWeightSum, timingWeightSum
-- adaptiveMeta: structuralDirection, tacticalDirection, timingDirection
-- adaptiveMeta: weightAdjustments {structureBoost, tacticalBoost, timingClamp}
-
-**Frontend Updates (ConsensusPanel.jsx):**
-- 🔒 STRUCTURAL LOCK badge when structuralLock=true
-- Dominance Alert showing which tier controls direction
-- Tier Weight Distribution with visual bars
-- Regime Impact display showing boost/clamp values
+### P3 (Future)
+- [ ] Multi-asset support (ETH, SOL)
+- [ ] Real-time WebSocket updates
+- [ ] Mobile-optimized dashboard
 
 ## Next Tasks
-1. BLOCK 75 — Memory & Self-Validation Layer (weight corrections from forward truth)
-2. Consensus Drift Tracker (7d history mini-chart)
-3. Phase Strength Indicator in terminal header
-4. Production simulation testing
-
-## Session: 2026-02-18 (continued)
-
-### Deployment Verification (COMPLETED)
-- Repository cloned from https://github.com/Shillmaster/dcdcdcd
-- Backend: Python FastAPI proxy (8001) → TypeScript Fractal backend (8002)
-- Frontend: React with Tailwind CSS (3000)
-- MongoDB: Local instance
-- Admin Panel: /admin/fractal - Fractal V2.1 Institutional Panel
-
-### All BLOCK 74 Features Verified Working:
-- BLOCK 74.1: Horizon Stack View (6 horizons with adaptive weights)
-- BLOCK 74.2: Institutional Consensus Panel
-- BLOCK 74.3: Adaptive Weighting 2.0 with Structural Dominance
-  - Tier Weight Distribution bars
-  - Regime Impact display
-  - Structural Lock status
-  - Vote breakdown per horizon
-
+1. Add Attribution tab to Admin Panel UI
+2. Add Policy Governance tab to Admin Panel UI
+3. Consensus Drift Tracker mini-chart
+4. Weekly attribution report in Telegram
