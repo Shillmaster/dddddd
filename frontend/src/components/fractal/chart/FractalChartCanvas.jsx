@@ -221,7 +221,7 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', width, heig
     }
     ctx.restore();
 
-  }, [chart, forecast, width, height, margins, hoverIndex]);
+  }, [chart, forecast, focus, renderMode, width, height, margins, hoverIndex]);
 
   const hoverCandle = hoverIndex !== null && chart?.candles?.[hoverIndex];
   const hoverSma = hoverCandle && chart?.sma200?.find(s => s.t === hoverCandle.t)?.value;
