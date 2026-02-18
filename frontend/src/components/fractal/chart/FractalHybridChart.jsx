@@ -61,7 +61,32 @@ export function FractalHybridChart({
   useEffect(() => {
     setSelectedMatchId(null);
     setCustomReplayPack(null);
+    setSelectedPhaseId(null);
+    setSelectedPhaseStats(null);
   }, [focus]);
+  
+  // BLOCK 73.5.2: Handle phase click drilldown
+  const handlePhaseClick = useCallback((phaseId, phaseStats) => {
+    console.log('[PhaseClick]', phaseId, phaseStats);
+    
+    if (!phaseId) {
+      // Clear phase filter
+      setSelectedPhaseId(null);
+      setSelectedPhaseStats(null);
+      if (onPhaseFilter) {
+        onPhaseFilter(null);
+      }
+      return;
+    }
+    
+    setSelectedPhaseId(phaseId);
+    setSelectedPhaseStats(phaseStats);
+    
+    // Notify parent to refetch focusPack with phaseId filter
+    if (onPhaseFilter) {
+      onPhaseFilter(phaseId);
+    }
+  }, [onPhaseFilter]);
   
   // BLOCK 73.4: Fetch replay pack when user selects a match
   const handleMatchSelect = useCallback(async (matchId) => {
