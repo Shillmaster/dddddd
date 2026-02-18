@@ -1161,6 +1161,262 @@ class FractalAPITester:
         return success
 
     # ═══════════════════════════════════════════════════════════════
+    # BLOCK 73.6: PHASE PERFORMANCE HEATMAP TESTS
+    # ═══════════════════════════════════════════════════════════════
+
+    def test_phase_performance_heatmap_basic(self):
+        """Test GET /api/fractal/v2.1/admin/phase-performance?symbol=BTC&tier=TACTICAL - basic phase performance data"""
+        params = {"symbol": "BTC", "tier": "TACTICAL"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/admin/phase-performance", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if not data.get("ok"):
+                success = False
+                details["error"] = "Expected 'ok': true"
+            elif "meta" not in data:
+                success = False
+                details["error"] = "Expected 'meta' field in response"
+            elif "global" not in data:
+                success = False
+                details["error"] = "Expected 'global' field in response"
+            elif "phases" not in data:
+                success = False
+                details["error"] = "Expected 'phases' field in response"
+            else:
+                # Validate meta structure
+                meta = data["meta"]
+                required_meta_fields = ["symbol", "tier", "resolvedCount", "from", "to"]
+                missing_meta = [f for f in required_meta_fields if f not in meta]
+                if missing_meta:
+                    success = False
+                    details["error"] = f"Missing meta fields: {missing_meta}"
+                elif meta["symbol"] != "BTC":
+                    success = False
+                    details["error"] = f"Expected symbol 'BTC', got '{meta['symbol']}'"
+                elif meta["tier"] != "TACTICAL":
+                    success = False
+                    details["error"] = f"Expected tier 'TACTICAL', got '{meta['tier']}'"
+                
+                # Validate global stats structure
+                if success:
+                    global_stats = data["global"]
+                    required_global_fields = ["hitRate", "avgRet", "sharpe", "maxDD"]
+                    missing_global = [f for f in required_global_fields if f not in global_stats]
+                    if missing_global:
+                        success = False
+                        details["error"] = f"Missing global stats fields: {missing_global}"
+                    else:
+                        details["global_stats"] = {
+                            "hit_rate": f"{global_stats['hitRate'] * 100:.1f}%",
+                            "avg_return": f"{global_stats['avgRet'] * 100:.2f}%",
+                            "sharpe": f"{global_stats['sharpe']:.2f}",
+                            "max_dd": f"-{global_stats['maxDD'] * 100:.1f}%"
+                        }
+                
+                # Validate phases array structure
+                if success:
+                    phases = data["phases"]
+                    if not isinstance(phases, list):
+                        success = False
+                        details["error"] = "Expected 'phases' to be an array"
+                    else:
+                        details["phases_count"] = len(phases)
+                        
+                        # Check if we have phase data (could be empty in fallback mode)
+                        if len(phases) > 0:
+                            # Validate first phase structure
+                            first_phase = phases[0]
+                            required_phase_fields = ["phaseId", "phaseName", "phaseType", "grade", "score", "hitRate", "avgRet", "samples", "sampleQuality"]
+                            missing_phase = [f for f in required_phase_fields if f not in first_phase]
+                            if missing_phase:
+                                success = False
+                                details["error"] = f"Missing phase fields: {missing_phase}"
+                            else:
+                                # Validate grade is A-F
+                                grade = first_phase["grade"]
+                                if grade not in ["A", "B", "C", "D", "F"]:
+                                    success = False
+                                    details["error"] = f"Invalid grade '{grade}', expected A-F"
+                                
+                                # Validate phaseType
+                                phase_type = first_phase["phaseType"]
+                                valid_phases = ["ACCUMULATION", "MARKUP", "DISTRIBUTION", "MARKDOWN", "RECOVERY", "CAPITULATION", "UNKNOWN"]
+                                if phase_type not in valid_phases:
+                                    success = False
+                                    details["error"] = f"Invalid phaseType '{phase_type}'"
+                                
+                                # Store phase summary
+                                details["first_phase"] = {
+                                    "name": first_phase["phaseName"],
+                                    "grade": first_phase["grade"],
+                                    "score": first_phase["score"],
+                                    "samples": first_phase["samples"],
+                                    "hit_rate": f"{first_phase['hitRate'] * 100:.1f}%"
+                                }
+                        else:
+                            details["note"] = "No phase data returned (possibly fallback mode with insufficient data)"
+                
+                # Check for warnings (FALLBACK_MODE_OVERLAY expected)
+                warnings = data.get("warnings", [])
+                if "FALLBACK_MODE_OVERLAY" in warnings:
+                    details["mode"] = "Fallback mode (overlay data from CSV)"
+                else:
+                    details["mode"] = "Real resolved snapshots mode"
+        
+        self.log_test("Phase Performance Heatmap Basic (BLOCK 73.6)", success, details)
+        return success
+
+    def test_phase_performance_heatmap_all_tiers(self):
+        """Test phase performance endpoint with all tier types (TIMING, TACTICAL, STRUCTURE)"""
+        tiers = ["TIMING", "TACTICAL", "STRUCTURE"]
+        all_success = True
+        tier_results = {}
+        
+        for tier in tiers:
+            params = {"symbol": "BTC", "tier": tier}
+            success, details = self.make_request("GET", "/api/fractal/v2.1/admin/phase-performance", params=params)
+            
+            if success:
+                data = details.get("response_data", {})
+                if data.get("ok"):
+                    meta = data.get("meta", {})
+                    phases = data.get("phases", [])
+                    tier_results[tier] = {
+                        "resolved_count": meta.get("resolvedCount", 0),
+                        "phases_count": len(phases),
+                        "horizon_days": meta.get("horizonDays")
+                    }
+                else:
+                    all_success = False
+                    tier_results[tier] = {"error": data.get("error", "Unknown error")}
+            else:
+                all_success = False
+                tier_results[tier] = {"error": details.get("error", "Request failed")}
+        
+        details = {"tier_results": tier_results}
+        if all_success:
+            details["note"] = "All three tiers (TIMING, TACTICAL, STRUCTURE) responded successfully"
+        
+        self.log_test("Phase Performance All Tiers (BLOCK 73.6)", all_success, details)
+        return all_success
+
+    def test_phase_performance_heatmap_parameter_validation(self):
+        """Test phase performance endpoint parameter validation"""
+        # Test invalid tier
+        params = {"symbol": "BTC", "tier": "INVALID"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/admin/phase-performance", params=params)
+        
+        # Should return 400 for invalid tier
+        if details.get("status_code") == 400:
+            success = True
+            details["note"] = "✅ Correctly rejected invalid tier with 400 status"
+        elif success:
+            # If it succeeded, that's unexpected
+            success = False
+            details["error"] = "Expected 400 for invalid tier, but request succeeded"
+        
+        # Test invalid horizon parameter
+        if success:
+            params2 = {"symbol": "BTC", "tier": "TACTICAL", "h": "999"}
+            success2, details2 = self.make_request("GET", "/api/fractal/v2.1/admin/phase-performance", params=params2)
+            
+            if details2.get("status_code") == 400:
+                details["horizon_validation"] = "✅ Correctly rejected invalid horizon"
+            elif success2:
+                success = False
+                details["error"] = "Expected 400 for invalid horizon (999), but request succeeded"
+            else:
+                details["horizon_validation"] = "Failed to test horizon validation"
+        
+        # Test valid horizon parameter
+        if success:
+            params3 = {"symbol": "BTC", "tier": "TACTICAL", "h": "30"}
+            success3, details3 = self.make_request("GET", "/api/fractal/v2.1/admin/phase-performance", params=params3)
+            
+            if success3:
+                data3 = details3.get("response_data", {})
+                if data3.get("ok"):
+                    meta3 = data3.get("meta", {})
+                    if meta3.get("horizonDays") == 30:
+                        details["horizon_30d"] = "✅ Correctly applied h=30 parameter"
+                    else:
+                        details["horizon_30d"] = f"Expected horizonDays=30, got {meta3.get('horizonDays')}"
+                else:
+                    details["horizon_30d"] = "Valid horizon request failed"
+            else:
+                details["horizon_30d"] = "Valid horizon request failed"
+        
+        self.log_test("Phase Performance Parameter Validation (BLOCK 73.6)", success, details)
+        return success
+
+    def test_phase_performance_grade_distribution(self):
+        """Test phase performance grade calculation and distribution"""
+        params = {"symbol": "BTC", "tier": "TACTICAL"}
+        success, details = self.make_request("GET", "/api/fractal/v2.1/admin/phase-performance", params=params)
+        
+        if success:
+            data = details.get("response_data", {})
+            if data.get("ok"):
+                phases = data.get("phases", [])
+                
+                if len(phases) > 0:
+                    # Analyze grade distribution
+                    grade_distribution = {}
+                    score_distribution = []
+                    
+                    for phase in phases:
+                        grade = phase.get("grade")
+                        score = phase.get("score", 0)
+                        
+                        grade_distribution[grade] = grade_distribution.get(grade, 0) + 1
+                        score_distribution.append(score)
+                    
+                    details["grade_distribution"] = grade_distribution
+                    details["score_stats"] = {
+                        "min_score": min(score_distribution) if score_distribution else 0,
+                        "max_score": max(score_distribution) if score_distribution else 0,
+                        "avg_score": sum(score_distribution) / len(score_distribution) if score_distribution else 0
+                    }
+                    
+                    # Validate grade-score consistency
+                    grade_score_valid = True
+                    for phase in phases:
+                        grade = phase.get("grade")
+                        score = phase.get("score", 0)
+                        
+                        # Check grade-score mapping
+                        if grade == "A" and score < 85:
+                            grade_score_valid = False
+                            break
+                        elif grade == "B" and (score < 70 or score >= 85):
+                            grade_score_valid = False
+                            break
+                        elif grade == "C" and (score < 55 or score >= 70):
+                            grade_score_valid = False
+                            break
+                        elif grade == "D" and (score < 40 or score >= 55):
+                            grade_score_valid = False
+                            break
+                        elif grade == "F" and score >= 40:
+                            grade_score_valid = False
+                            break
+                    
+                    if grade_score_valid:
+                        details["grade_score_mapping"] = "✅ All grades consistent with score ranges"
+                    else:
+                        success = False
+                        details["error"] = "Grade-score mapping inconsistency found"
+                else:
+                    details["note"] = "No phases to analyze (empty dataset)"
+            else:
+                success = False
+                details["error"] = "Phase performance request failed"
+        
+        self.log_test("Phase Performance Grade Distribution (BLOCK 73.6)", success, details)
+        return success
+
+    # ═══════════════════════════════════════════════════════════════
     # BLOCK 73.5.2: PHASE CLICK DRILLDOWN TESTS
     # ═══════════════════════════════════════════════════════════════
 
