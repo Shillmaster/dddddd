@@ -214,6 +214,7 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
     const xAnchor = x(candles.length - 1);
     
     // BLOCK 72.3: Choose forecast renderer based on focus and mode
+    // BLOCK 73.3: Pass markers to hybrid renderer for 14D continuity
     if (mode === 'hybrid' && primaryMatch) {
       // Hybrid mode: draw both synthetic and replay
       drawHybridForecast(
@@ -225,7 +226,8 @@ export function FractalChartCanvas({ chart, forecast, focus = '30d', mode = 'pri
         plotW,
         margins.top,
         margins.bottom,
-        height
+        height,
+        forecast?.markers || [] // BLOCK 73.3: Pass markers for continuity
       );
     } else if (renderMode === 'CAPSULE_7D' && forecast?.distribution7d) {
       // 7D: Draw compact directional arrow + insight block
