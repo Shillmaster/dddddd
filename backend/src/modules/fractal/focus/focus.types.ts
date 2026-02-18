@@ -216,6 +216,9 @@ export interface FocusPack {
   
   // BLOCK 73.1.1: Normalized Series (STRUCTURE % mode)
   normalizedSeries?: NormalizedSeries;
+  
+  // BLOCK 73.2: Divergence Engine
+  divergence?: DivergenceMetrics;
 }
 
 // ═══════════════════════════════════════════════════════════════
