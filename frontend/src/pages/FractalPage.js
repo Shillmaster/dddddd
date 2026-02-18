@@ -286,6 +286,9 @@ const FractalTerminal = () => {
   const sizing = terminalData?.decisionKernel?.sizing;
   const consensus = terminalData?.decisionKernel?.consensus;
   const conflict = terminalData?.decisionKernel?.conflict;
+  // BLOCK 74: Horizon Stack + Institutional Consensus
+  const horizonStack = terminalData?.horizonStack;
+  const consensus74 = terminalData?.consensus74;
   
   const isLoading = focusLoading || terminalLoading;
   const tierColor = meta ? getTierColor(meta.tier) : '#6B7280';
