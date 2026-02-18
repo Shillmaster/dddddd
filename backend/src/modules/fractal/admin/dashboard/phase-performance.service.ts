@@ -533,11 +533,21 @@ export class PhasePerformanceService {
     }
     
     // Extract closes and timestamps from canonical format
-    // Handle both canonical format (ohlcv.c) and simple format (c)
-    const closes = candles.map((c: any) => c.ohlcv?.c ?? c.c);
+    // Handle multiple formats:
+    // - CSV provider (OhlcvCandle): { ts, close, ... }
+    // - Canonical format: { ohlcv: { c }, ts }
+    // - Chart API format: { t, c, ... }
+    const closes = candles.map((c: any) => {
+      if (typeof c.close === 'number') return c.close;  // OhlcvCandle from CSV
+      if (c.ohlcv?.c !== undefined) return c.ohlcv.c;   // Canonical
+      if (typeof c.c === 'number') return c.c;          // Chart API
+      return undefined;
+    });
+    
     const timestamps = candles.map((c: any) => {
-      if (c.ohlcv) return c.ts?.getTime ? c.ts.getTime() : c.ts;
-      return c.t;
+      if (c.ts) return c.ts instanceof Date ? c.ts.getTime() : c.ts;
+      if (c.t) return c.t;
+      return 0;
     });
     
     // Debug: log first few closes
