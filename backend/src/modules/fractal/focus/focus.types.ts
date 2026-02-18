@@ -166,6 +166,42 @@ export interface PrimarySelection {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// BLOCK 73.2 — DIVERGENCE ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+export type DivergenceGrade = 'A' | 'B' | 'C' | 'D' | 'F';
+
+export type DivergenceFlag = 
+  | 'HIGH_DIVERGENCE'
+  | 'LOW_CORR'
+  | 'TERM_DRIFT'
+  | 'DIR_MISMATCH'
+  | 'PERFECT_MATCH';
+
+export interface DivergenceMetrics {
+  horizonDays: number;
+  mode: AxisMode;
+  
+  // Core metrics (all in % for UI consistency)
+  rmse: number;              // Root mean square error (%)
+  mape: number;              // Mean absolute % error
+  maxAbsDev: number;         // Max |synthetic - replay| (%)
+  terminalDelta: number;     // End point divergence (%)
+  directionalMismatch: number; // % of days with opposite direction
+  corr: number;              // Pearson correlation on daily returns (-1 to 1)
+  
+  // Composite score
+  score: number;             // 0..100 (higher = better alignment)
+  grade: DivergenceGrade;    // A/B/C/D/F
+  
+  // Warning flags
+  flags: DivergenceFlag[];
+  
+  // Debug/transparency
+  samplePoints: number;      // Number of data points used
+}
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN FOCUS PACK
 // ═══════════════════════════════════════════════════════════════
 
