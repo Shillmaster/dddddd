@@ -90,30 +90,61 @@ export async function buildFocusPack(
     console.error('[FocusPack] Match error:', err);
   }
   
-  // BLOCK 73.5.2: Filter matches by phase TYPE if phaseId provided
+  // Build overlay pack from ALL matches first (phase is computed inside)
+  const rawMatches = matchResult?.matches || [];
+  let overlay = buildOverlayPackFromMatches(
+    rawMatches, 
+    allCandles, 
+    allCloses, 
+    allTimestamps,
+    mappedWindowLen,
+    cfg.aftermathDays,
+    cfg.topK * 2 // Get more to filter from
+  );
+  
+  // BLOCK 73.5.2: Filter processed matches by phase TYPE if phaseId provided
   // phaseId format: "PHASENAME_YYYY-MM-DD_YYYY-MM-DD"
-  // We filter by phase TYPE (ACCUMULATION, DISTRIBUTION, etc), not by date range
-  let filteredMatches = matchResult?.matches || [];
   let phaseFilter: any = null;
   
   if (phaseId) {
-    // Parse phaseId to extract phase type
     const parts = phaseId.split('_');
     if (parts.length >= 3) {
       // Phase type is everything before the dates
-      // e.g., "DISTRIBUTION_2025-02-18_2025-02-24" -> phaseType = "DISTRIBUTION"
       const phaseType = parts.slice(0, -2).join('_').toUpperCase();
       const from = parts[parts.length - 2];
       const to = parts[parts.length - 1];
       
-      // Filter matches by phase TYPE
-      const originalCount = filteredMatches.length;
-      filteredMatches = filteredMatches.filter((m: any) => {
-        const matchPhase = (m.phase || '').toUpperCase();
-        return matchPhase === phaseType;
+      // Filter PROCESSED matches by phase TYPE (now they have the phase field)
+      const originalCount = overlay.matches.length;
+      const filteredMatches = overlay.matches.filter((m: OverlayMatch) => {
+        return (m.phase || '').toUpperCase() === phaseType;
       });
       
       console.log(`[FocusPack] Phase filter by TYPE: ${phaseType}, matches: ${originalCount} -> ${filteredMatches.length}`);
+      
+      // Rebuild overlay with filtered matches
+      if (filteredMatches.length > 0) {
+        // Rebuild distribution series from filtered matches
+        const filteredDist = buildDistributionSeries(filteredMatches, cfg.aftermathDays);
+        
+        // Recalculate stats
+        const returns = filteredMatches.map(m => m.return);
+        const filteredStats = {
+          medianReturn: percentile(returns, 0.5),
+          p10Return: percentile(returns, 0.1),
+          p90Return: percentile(returns, 0.9),
+          avgMaxDD: filteredMatches.reduce((s, m) => s + m.maxDrawdown, 0) / filteredMatches.length,
+          hitRate: returns.filter(r => r > 0).length / returns.length,
+          sampleSize: filteredMatches.length,
+        };
+        
+        overlay = {
+          ...overlay,
+          matches: filteredMatches.slice(0, cfg.topK),
+          distributionSeries: filteredDist,
+          stats: filteredStats,
+        };
+      }
       
       phaseFilter = {
         phaseId,
@@ -126,17 +157,6 @@ export async function buildFocusPack(
       };
     }
   }
-  
-  // Build overlay pack from filtered matches
-  const overlay = buildOverlayPackFromMatches(
-    filteredMatches, 
-    allCandles, 
-    allCloses, 
-    allTimestamps,
-    mappedWindowLen,
-    cfg.aftermathDays,
-    cfg.topK
-  );
   
   // Build current window
   const currentCandles = allCandles.slice(-mappedWindowLen);
