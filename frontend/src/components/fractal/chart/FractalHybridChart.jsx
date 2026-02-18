@@ -87,13 +87,15 @@ export function FractalHybridChart({
     };
   }, [chart, focusPack]);
   
-  // Get primary replay match
+  // Get primary replay match - BLOCK 73.1: Use weighted primaryMatch
   const primaryMatch = useMemo(() => {
-    if (!focusPack?.overlay?.matches?.length) return null;
     if (!chart?.candles?.length) return null;
     
     const currentPrice = chart.candles[chart.candles.length - 1].c;
-    const match = focusPack.overlay.matches[0]; // For now use top match, later: primaryMatch
+    
+    // BLOCK 73.1: Prefer primarySelection.primaryMatch from backend
+    const match = focusPack?.primarySelection?.primaryMatch 
+      || focusPack?.overlay?.matches?.[0]; // Fallback for backward compat
     
     if (!match?.aftermathNormalized?.length) return null;
     
@@ -106,6 +108,10 @@ export function FractalHybridChart({
       similarity: match.similarity || 0.75,
       phase: match.phase,
       replayPath,
+      // BLOCK 73.1: Include selection metadata
+      selectionScore: match.selectionScore,
+      selectionReason: match.selectionReason,
+      scores: match.scores,
       // For future divergence calculation
       returns: match.aftermathNormalized
     };
