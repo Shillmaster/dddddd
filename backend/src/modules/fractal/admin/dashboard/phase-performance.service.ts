@@ -12,7 +12,6 @@
 
 import { SignalSnapshotModel, type SignalSnapshotDocument } from '../../storage/signal-snapshot.schema.js';
 import { CanonicalStore } from '../../data/canonical.store.js';
-import { PhaseDetector } from '../../engine/phase/phase.detector.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
