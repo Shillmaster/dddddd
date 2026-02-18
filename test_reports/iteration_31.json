@@ -1,0 +1,38 @@
+{
+  "summary": "P1.6 Sizing Breakdown testing completed - Backend APIs fully functional with transparent breakdown array and formula. Frontend SizingBreakdown component displays correctly with decision summary cards.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": []
+  },
+  "passed_tests": [
+    "Backend /terminal API returns sizing.breakdown array with 5 factors (BASE_PRESET, CONSENSUS, CONFLICT, RISK, VOLATILITY)",
+    "Backend /terminal returns sizing.formula string with multiplication operations",
+    "SizingBreakdown component renders correctly on FractalPage with breakdown table structure",
+    "Decision Summary Cards display (Consensus, Conflict, Vol Regime)",
+    "Volatility Card shows CRISIS regime with appropriate multipliers (×0.25 size, -15pp confidence)",
+    "Chart mode switcher functionality works (Price Chart/Fractal Overlay)",
+    "Final Position Size displays correctly (0.0% in crisis mode)",
+    "Blocker indicators work (LOW_CONFIDENCE, HIGH_ENTROPY, VOL_CRISIS, EXTREME_VOL_SPIKE)",
+    "All P1.4-P1.6 volatility features integrated and working",
+    "Admin volatility attribution and timeline endpoints functional",
+    "Response times good (0.09-0.13s for API calls)"
+  ],
+  "test_report_links": [
+    "/app/backend_test.py",
+    "/app/test_reports/iteration_31.json"
+  ],
+  "action_item_for_main_agent": "",
+  "updated_files": [
+    "/app/backend_test.py"
+  ],
+  "success_percentage": {
+    "backend": "100% (21/21 tests passed)",
+    "frontend": "95% (minor regex syntax error in formula detection but all core components working)"
+  },
+  "should_call_test_agent_after_fix": "false",
+  "should_main_agent_test_itself": "true"
+}

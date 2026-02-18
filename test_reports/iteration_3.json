@@ -1,0 +1,45 @@
+{
+  "summary": "Successfully completed comprehensive testing of Fractal V2.1 BLOCK 43.x - Hardening + Persistence. All admin endpoints functional with drift injection correctly changing reliability badges, snapshots written to MongoDB, and complete status endpoint integration verified.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": [],
+    "minor_issues": [
+      {
+        "endpoint": "Previous cert freeze endpoint",
+        "issue": "Legacy certification freeze errors in logs ('require is not defined') - unrelated to current BLOCK 43.x testing",
+        "impact": "No impact on BLOCK 43.x functionality",
+        "fix_priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": []
+  },
+  "passed_tests": [
+    "GET /api/fractal/v2.1/admin/status - Complete system status with reliability, calibration, signal data",
+    "POST /api/fractal/v2.1/admin/drift/reset - Calibration reset to clean baseline state",
+    "POST /api/fractal/v2.1/admin/drift/inject (low severity 0.25) - Badge remained WARN as expected",
+    "POST /api/fractal/v2.1/admin/drift/inject (high severity 0.8) - Badge correctly changed to DEGRADED",
+    "POST /api/fractal/v2.1/admin/drift/inject (severe 0.9) - Badge correctly escalated to CRITICAL",
+    "GET /api/fractal/v2.1/admin/reliability/history - Snapshot history retrieval with drift injection contexts",
+    "Badge progression verification: WARN → DEGRADED → CRITICAL with increasing severity",
+    "MongoDB persistence: Calibration data consistent across API calls",
+    "Snapshot accumulation: New snapshots properly written to MongoDB collection",
+    "Model key separation: BTCUSD:14 and ETHUSD:7 maintain separate calibration states",
+    "Error handling: Invalid inputs handled gracefully with defaults",
+    "No-trade reasons: Properly populated when reliability badge is DEGRADED/CRITICAL"
+  ],
+  "test_report_links": [
+    "/app/backend/fractal_v21_admin_test.py",
+    "/app/backend/fractal_v21_extended_test.py"
+  ],
+  "action_item_for_main_agent": "",
+  "updated_files": [
+    "/app/backend/fractal_v21_admin_test.py",
+    "/app/backend/fractal_v21_extended_test.py"
+  ],
+  "success_percentage": "backend: 100% (all BLOCK 43.x endpoints fully functional)",
+  "should_call_test_agent_after_fix": "false",
+  "should_main_agent_test_itself": "false"
+}

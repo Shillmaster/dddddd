@@ -1,0 +1,243 @@
+/**
+ * BLOCK 50 + 57.2 + P1.5 — Admin Dashboard with Tabs
+ * 
+ * Institutional control panel for Fractal V2.1
+ * Tab: Overview | Shadow Divergence | Volatility
+ */
+
+import React, { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { GovernanceCard } from './GovernanceCard';
+import { HealthCard } from './HealthCard';
+import { ReliabilityCard } from './ReliabilityCard';
+import { PerformanceCard } from './PerformanceCard';
+import { GuardCard } from './GuardCard';
+import { PlaybookCard } from './PlaybookCard';
+import { TailRiskCard } from './TailRiskCard';
+import { SnapshotTimeline } from './SnapshotTimeline';
+import { ShadowDivergencePanel } from './shadow';
+import VolatilityTab from './VolatilityTab';
+
+const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
+
+const TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'shadow', label: 'Shadow Divergence' },
+  { id: 'volatility', label: 'Volatility' }
+];
+
+export function AdminDashboard() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'overview';
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [lastUpdate, setLastUpdate] = useState(null);
+  
+  const setActiveTab = (tabId) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('tab', tabId);
+    // Reset shadow params when switching away
+    if (tabId !== 'shadow') {
+      params.delete('preset');
+      params.delete('h');
+      params.delete('role');
+    }
+    setSearchParams(params, { replace: true });
+  };
+
+  const fetchData = useCallback(async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/fractal/v2.1/admin/overview?symbol=BTC`);
+      if (!response.ok) throw new Error('Failed to fetch admin overview');
+      const result = await response.json();
+      setData(result);
+      setLastUpdate(new Date());
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
+  
+  const handleApplyPlaybook = async (playbookType) => {
+    try {
+      const response = await fetch(`${API_BASE}/api/fractal/v2.1/admin/playbook/apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: playbookType,
+          confirm: true,
+          actor: 'ADMIN',
+          reason: 'Applied from Admin Dashboard',
+        }),
+      });
+      
+      if (!response.ok) throw new Error('Failed to apply playbook');
+      await fetchData();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  };
+  
+  // Loading state - only for Overview tab
+  if (loading && activeTab === 'overview') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">Fractal V2.1 — Institutional Panel</h1>
+              <p className="text-sm text-gray-500">
+                {data?.meta?.version || 'v2.1'} | Symbol: {data?.meta?.symbol || 'BTC'}
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-gray-400">
+                Last update: {lastUpdate?.toLocaleTimeString() || '—'}
+              </span>
+              <button
+                onClick={fetchData}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Refresh"
+                data-testid="refresh-btn"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mt-4 border-b border-gray-200 -mb-px">
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-blue-600 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+                data-testid={`tab-${tab.id}`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </header>
+      
+      {/* Tab Content */}
+      {activeTab === 'overview' ? (
+        <OverviewTab 
+          data={data} 
+          error={error} 
+          fetchData={fetchData}
+          handleApplyPlaybook={handleApplyPlaybook}
+        />
+      ) : activeTab === 'shadow' ? (
+        <ShadowDivergencePanel />
+      ) : activeTab === 'volatility' ? (
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <VolatilityTab />
+        </div>
+      ) : (
+        <ShadowDivergencePanel />
+      )}
+      
+      {/* Footer */}
+      <footer className="border-t border-gray-200 bg-white mt-8">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between text-xs text-gray-400">
+            <span>Contract: 7d / 14d / 30d horizons | FROZEN</span>
+            <span>Institutional Risk Governance Dashboard</span>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+/**
+ * Overview Tab (Original Admin Dashboard content)
+ */
+function OverviewTab({ data, error, fetchData, handleApplyPlaybook }) {
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center p-6 bg-red-50 rounded-xl border border-red-200 max-w-md">
+          <p className="text-red-600 font-medium mb-2">Error loading dashboard</p>
+          <p className="text-red-500 text-sm">{error}</p>
+          <button 
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <main className="max-w-7xl mx-auto px-4 py-6">
+      {/* Top Row - Critical Status */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <GovernanceCard governance={data?.governance} />
+        <HealthCard health={data?.health} />
+        <GuardCard guard={data?.guard} />
+      </div>
+      
+      {/* Middle Row - Model Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <ReliabilityCard model={data?.model} />
+        <TailRiskCard model={data?.model} />
+        <PerformanceCard performance={data?.performance} />
+      </div>
+      
+      {/* Bottom Row - Actions & History */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <PlaybookCard 
+          recommendation={data?.recommendation} 
+          onApply={handleApplyPlaybook}
+        />
+        <SnapshotTimeline recent={data?.recent} />
+      </div>
+    </main>
+  );
+}
+
+export default AdminDashboard;

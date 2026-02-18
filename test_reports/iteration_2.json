@@ -1,0 +1,53 @@
+{
+  "summary": "Completed comprehensive testing of Fractal V2.1 Certification Suite (BLOCK 41.x). All core certification endpoints are functional with minor fixes applied. Deterministic replay working, phase replay testing 5 market phases, drift injection accessible but incomplete as expected.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": [],
+    "minor_fixes_applied": [
+      {
+        "endpoint": "/api/fractal/v2.1/admin/cert/freeze",
+        "issue": "JavaScript error 'require is not defined' due to ES module incompatibility",
+        "fix_applied": "Converted require() to dynamic import() and made getPreset() async",
+        "files_modified": [
+          "/app/backend/src/modules/fractal/api/fractal.cert.routes.ts",
+          "/app/backend/src/modules/fractal/cert/cert.freeze.service.ts"
+        ],
+        "fix_priority": "FIXED"
+      }
+    ],
+    "expected_incomplete_features": [
+      {
+        "endpoint": "/api/fractal/v2.1/admin/cert/drift-inject",
+        "issue": "Drift injection returns pass: false - not fully integrated with reliability service",
+        "status": "Expected per agent context",
+        "impact": "Non-blocking - functionality accessible for testing"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": []
+  },
+  "passed_tests": [
+    "GET /api/health - FRACTAL_ONLY mode confirmed",
+    "GET /api/fractal/health - Module enabled, bootstrap done, 5692 candles, data integrity OK",
+    "GET /api/fractal/signal?symbol=BTC - Signal generation working with confidence, risk, and position data",
+    "POST /api/fractal/v2.1/admin/cert/replay (BLOCK 41.1) - Deterministic replay verified: 10 runs, 1 unique hash",
+    "POST /api/fractal/v2.1/admin/cert/run (BLOCK 41.2) - Full certification suite: 3 tests (replay pass, drift expected fail, phase pass)",
+    "POST /api/fractal/v2.1/admin/cert/drift-inject (BLOCK 41.3) - Endpoint accessible, returns structured response (pass=false expected)",
+    "POST /api/fractal/v2.1/admin/cert/phase-replay (BLOCK 41.4) - Phase stress testing: 5 phases (2015_recovery, 2017_bubble, 2018_crash, 2020_covid, 2022_bear) all pass",
+    "POST /api/fractal/v2.1/admin/cert/freeze (BLOCK 41.5) - Certification freeze working after fix, generates stamp with preset hash"
+  ],
+  "test_report_links": [
+    "/app/backend/fractal_v21_cert_test.py"
+  ],
+  "action_item_for_main_agent": "",
+  "updated_files": [
+    "/app/backend/fractal_v21_cert_test.py",
+    "/app/backend/src/modules/fractal/api/fractal.cert.routes.ts",
+    "/app/backend/src/modules/fractal/cert/cert.freeze.service.ts"
+  ],
+  "success_percentage": "backend: 100% (all endpoints functional)",
+  "should_call_test_agent_after_fix": "false",
+  "should_main_agent_test_itself": "false"
+}

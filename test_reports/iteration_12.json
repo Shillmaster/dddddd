@@ -1,0 +1,39 @@
+{
+  "summary": "Successfully tested BLOCK 51 Fractal Dashboard with institutional white design. All main components working properly including SignalCard, ReliabilityPanel, HorizonTable, ForecastChart (Canvas with Catmull-Rom spline), MatchesList, and ExplainBlock with noTradeReasons.",
+  "backend_issues": {
+    "critical_bugs": [],
+    "flaky_endpoints": [
+      {
+        "endpoint": "WebSocket connection",
+        "failure_rate": "100%",
+        "symptoms": "WebSocket connections to /ws failing with 404 or connection errors",
+        "workaround": "Does not affect main functionality, page works without WebSocket"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "Fractal page loads with white institutional design",
+    "SignalCard displays action (HOLD), confidence (1.2%), expected return (+10.7%), dominant horizon (30d)",
+    "ReliabilityPanel shows reliability badge (OK), score (75.0%), tail risk (49.7%), entropy (98.3%), size multiplier (0.15x)",
+    "HorizonTable displays 3 rows (7d/14d/30d) with action, confidence, expected return, effective N",
+    "Horizon row selection works - clicking rows changes selected horizon",
+    "ForecastChart renders Canvas with Catmull-Rom spline and confidence band (1034x256)",
+    "MatchesList shows 3 matches with similarity percentages",
+    "ExplainBlock displays noTradeReasons (LOW_CONFIDENCE, HIGH_ENTROPY)",
+    "All tabs (Dashboard, Signal, Matches, Backtest) are clickable and navigate properly",
+    "URL changes correctly on tab navigation",
+    "Refresh button functionality works",
+    "All components remain visible after tab navigation"
+  ],
+  "test_report_links": [],
+  "success_percentage": "frontend: 95% (WebSocket connection issues don't affect core functionality)",
+  "updated_files": [],
+  "action_item_for_main_agent": "",
+  "should_call_test_agent_after_fix": "false",
+  "should_main_agent_test_itself": "true"
+}

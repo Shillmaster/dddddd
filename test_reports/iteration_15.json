@@ -1,0 +1,83 @@
+{
+  "summary": "Completed testing of Fractal Terminal Canvas Engine v1 implementation. Found critical backend API issues preventing full functionality.",
+  "backend_issues": {
+    "critical_bugs": [
+      {
+        "endpoint": "/api/fractal/v2.1/chart",
+        "issue": "Returns 520 error intermittently - server internal error",
+        "impact": "Price Chart fails to load candles, SMA200, and phase data",
+        "fix_priority": "CRITICAL"
+      },
+      {
+        "endpoint": "/api/fractal/v2.1/signal",
+        "issue": "Returns 520 error intermittently - server internal error", 
+        "impact": "Forecast data cannot be loaded for price chart",
+        "fix_priority": "CRITICAL"
+      },
+      {
+        "endpoint": "/api/fractal/v2.1/overlay",
+        "issue": "Returns 520 error and distribution field structure mismatch",
+        "impact": "Fractal Overlay tab shows 'No overlay data' and 'Error: overlay 520'",
+        "fix_priority": "CRITICAL"
+      }
+    ],
+    "data_structure_issues": [
+      {
+        "endpoint": "/api/fractal/v2.1/overlay",
+        "issue": "Distribution field p10/p90 are not arrays as expected by frontend",
+        "impact": "OverlayCanvas cannot render distribution fan properly",
+        "fix_priority": "HIGH"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "FractalChartCanvas",
+        "issue": "Tooltip not appearing on hover over price chart",
+        "selector": "canvas hover interaction",
+        "fix_priority": "MEDIUM"
+      },
+      {
+        "component": "FractalOverlaySection", 
+        "issue": "Shows 'No overlay data' and 'Error: overlay 520' when API fails",
+        "selector": "[data-testid='fractal-overlay-section']",
+        "fix_priority": "HIGH"
+      }
+    ],
+    "integration_issues": [
+      {
+        "flow": "Price Chart loading",
+        "issue": "Chart shows 'Loading chart...' when API returns 520 errors",
+        "affected_selectors": ["canvas", ".loading"]
+      },
+      {
+        "flow": "Fractal Overlay loading", 
+        "issue": "Overlay section fails to load data due to API 520 errors",
+        "affected_selectors": ["[data-testid='overlay-canvas']", ".error"]
+      }
+    ]
+  },
+  "passed_tests": [
+    "Fractal Terminal page loads successfully",
+    "Both Price Chart and Fractal Overlay tabs are present and clickable",
+    "Tab switching works correctly between Price Chart and Fractal Overlay",
+    "Page layout and styling renders correctly",
+    "Canvas elements are present in DOM",
+    "Match Metrics panel structure is present",
+    "No JavaScript errors in console (only API 520 errors)"
+  ],
+  "test_report_links": [
+    "/app/backend/fractal_v21_chart_test.py"
+  ],
+  "success_percentage": {
+    "backend": "33% - Chart API works partially, Overlay and Signal APIs fail with 520 errors",
+    "frontend": "70% - UI loads and renders correctly, but data integration fails due to backend issues"
+  },
+  "action_item_for_main_agent": "Fix critical 520 server errors in fractal v2.1 APIs (/api/fractal/v2.1/chart, /api/fractal/v2.1/signal, /api/fractal/v2.1/overlay). Backend service appears to be unstable or misconfigured. Also fix distribution field structure in overlay API to return p10/p90 as arrays.",
+  "updated_files": [
+    "/app/backend/fractal_v21_chart_test.py"
+  ],
+  "should_call_test_agent_after_fix": "true",
+  "should_main_agent_test_itself": "false"
+}
