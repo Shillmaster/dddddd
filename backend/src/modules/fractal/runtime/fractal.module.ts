@@ -197,6 +197,8 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   console.log('[Fractal] PHASE 2 P0.1: Terminal Aggregator registered');
   console.log('[Fractal] P1.5: Volatility Attribution registered');
   console.log('[Fractal] BLOCK 67-68: Alert System registered');
+  console.log('[Fractal] BLOCK 75.1: Memory Snapshot Persistence registered');
+  console.log('[Fractal] BLOCK 75.2: Forward Truth Outcome Resolver registered');
   console.log('[Fractal] FREEZE: Contract v2.1.0 frozen, guards active');
   console.log('[Fractal] Chart + Overlay endpoints registered');
 }
