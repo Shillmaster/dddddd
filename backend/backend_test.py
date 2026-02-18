@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 
 class FractalAPITester:
-    def __init__(self, base_url: str = "https://fullstack-sandbox.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://tradeanalyzer-8.preview.emergentagent.com"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
@@ -2927,7 +2927,7 @@ class FractalAPITester:
 def main():
     """Main test execution"""
     print("🔧 Fractal Backend Testing Suite - PHASE 2 P0.1-P0.4: Terminal Aggregator System")
-    print(f"Testing backend at: https://adaptive-regime.preview.emergentagent.com")
+    print(f"Testing backend at: https://tradeanalyzer-8.preview.emergentagent.com")
     print(f"Test started at: {datetime.now().isoformat()}")
     print()
     

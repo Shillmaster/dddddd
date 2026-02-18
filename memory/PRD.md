@@ -97,7 +97,7 @@ TG_ADMIN_CHAT_ID=your_chat_id
 ```
 
 ## Access
-- **URL:** https://fullstack-sandbox.preview.emergentagent.com
+- **URL:** https://tradeanalyzer-8.preview.emergentagent.com
 - **Admin:** /admin/fractal
 - **Alerts Tab:** /admin/fractal?tab=alerts
 - **Auth:** Not required (open access)

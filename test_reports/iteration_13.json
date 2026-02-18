@@ -18,7 +18,7 @@
       {
         "component": "External Preview URL", 
         "issue": "Preview shows 'Unavailable - Agent resting after inactivity'",
-        "details": "https://adaptive-regime.preview.emergentagent.com/fractal returns preview unavailable page",
+        "details": "https://tradeanalyzer-8.preview.emergentagent.com/fractal returns preview unavailable page",
         "impact": "Cannot test external user experience",
         "fix_priority": "LOW",
         "workaround": "Local testing confirms frontend loads properly"
