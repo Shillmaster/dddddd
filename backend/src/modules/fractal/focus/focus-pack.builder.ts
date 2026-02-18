@@ -106,12 +106,23 @@ export async function buildFocusPack(
         // Include end of day for toTs
         const toTs = new Date(to + 'T23:59:59.999Z').getTime();
         
+        // Debug: Log match dates
+        console.log('[FocusPack] Phase filter range:', from, 'to', to);
+        console.log('[FocusPack] First 5 match dates:', filteredMatches.slice(0, 5).map((m: any) => ({
+          id: m.id,
+          date: m.date,
+          ts: new Date(m.date || m.id).getTime()
+        })));
+        console.log('[FocusPack] Range in ts:', fromTs, 'to', toTs);
+        
         // Filter matches that fall within phase date range
         const originalCount = filteredMatches.length;
         filteredMatches = filteredMatches.filter((m: any) => {
           const matchDate = m.date || m.id;
           const matchTs = new Date(matchDate).getTime();
-          return matchTs >= fromTs && matchTs <= toTs;
+          const inRange = matchTs >= fromTs && matchTs <= toTs;
+          if (inRange) console.log('[FocusPack] Match in range:', matchDate, matchTs);
+          return inRange;
         });
         
         phaseFilter = {
