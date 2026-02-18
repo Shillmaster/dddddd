@@ -261,8 +261,8 @@ export class PhasePerformanceService {
       const candles = await this.canonicalStore.getRange(symbol, '1D', from, date);
       if (!candles || candles.length < 50) return 'UNKNOWN';
       
-      // Use inline phase detector
-      const closes = candles.map(c => c.c);
+      // Use inline phase detector - extract closes from canonical format
+      const closes = candles.map(c => c.ohlcv.c);
       const phase = detectPhaseSimple(closes);
       
       return phase;
