@@ -391,36 +391,71 @@ export class PhasePerformanceService {
   /**
    * Calculate phase performance score (0-100)
    */
+  /**
+   * INSTITUTIONAL PHASE SCORE CALCULATION
+   * 
+   * Weights:
+   * - 40% HitRate (primary signal quality)
+   * - 25% Expectancy (avgRet, tier-scaled)
+   * - 20% Sharpe (risk-adjusted consistency)
+   * - 15% Divergence (model confidence quality)
+   * 
+   * Penalties:
+   * - LOW_SAMPLE: -15
+   * - VERY_LOW_SAMPLE: -25
+   * - HIGH_TAIL (P10 < threshold): -10
+   * - HIGH_DIVERGENCE (< 55): -10
+   * - LOW_RECENCY (< 0.4): -5
+   */
   private calcPhaseScore(stats: {
     hitRate: number;
     expectancy: number;
     sharpe: number;
-    profitFactor: number;
-    maxDD: number;
+    p10: number;
     avgDivergenceScore: number;
-  }, sampleQuality: SampleQuality): number {
-    // Normalize metrics to 0-1 scale
-    const normHitRate = normalize(stats.hitRate, 0.3, 0.7);       // 30%-70% range
-    const normExpectancy = normalize(stats.expectancy, -0.05, 0.1); // -5% to +10%
-    const normSharpe = normalize(stats.sharpe, -0.5, 2.0);        // -0.5 to 2.0
-    const normPF = normalize(stats.profitFactor, 0.5, 2.0);       // 0.5x to 2x
-    const normDD = normalize(1 - stats.maxDD, 0.6, 1.0);          // 0-40% DD good
-    const normDiv = normalize(stats.avgDivergenceScore, 40, 90);  // 40-90 good
+    recencyWeight: number;
+  }, tier: Tier, sampleQuality: SampleQuality): number {
+    const retScale = TIER_RET_SCALE[tier];
+    const tailThreshold = TIER_TAIL_THRESHOLD[tier];
     
-    // Weighted composite
+    // Normalize metrics to 0-1 scale
+    // HitRate: 35% = 0, 65% = 1 (tight range for meaningful signal)
+    const normHitRate = normalize(stats.hitRate, 0.35, 0.65);
+    
+    // Expectancy: tier-scaled (-retScale to +retScale*2)
+    const normExpectancy = normalize(stats.expectancy, -retScale, retScale * 2);
+    
+    // Sharpe: -0.5 to 2.0
+    const normSharpe = normalize(stats.sharpe, SHARPE_MIN, SHARPE_MAX);
+    
+    // Divergence: 40-90 is good range (already 0-100 scale)
+    const normDiv = normalize(stats.avgDivergenceScore, 40, 90);
+    
+    // INSTITUTIONAL WEIGHTED COMPOSITE
+    // 40% HitRate + 25% Expectancy + 20% Sharpe + 15% Divergence
     let score = (
-      0.30 * normHitRate +
+      0.40 * normHitRate +
       0.25 * normExpectancy +
       0.20 * normSharpe +
-      0.15 * normPF +
-      0.05 * normDD +
-      0.05 * normDiv
+      0.15 * normDiv
     ) * 100;
     
-    // Apply penalties
-    if (sampleQuality === 'LOW_SAMPLE') score -= 10;
-    if (sampleQuality === 'VERY_LOW_SAMPLE') score -= 20;
-    if (stats.avgDivergenceScore < 55) score -= 15; // HIGH_DIVERGENCE penalty
+    // ═══════════════════════════════════════════════════════════════
+    // PENALTIES (institutional risk management)
+    // ═══════════════════════════════════════════════════════════════
+    
+    // Sample quality penalties
+    if (sampleQuality === 'LOW_SAMPLE') score -= 15;
+    if (sampleQuality === 'VERY_LOW_SAMPLE') score -= 25;
+    
+    // High tail risk penalty
+    if (stats.p10 < tailThreshold) score -= 10;
+    
+    // High divergence penalty (model not confident)
+    if (stats.avgDivergenceScore < 55) score -= 10;
+    
+    // Low recency penalty (stale data)
+    if (stats.recencyWeight < 0.4) score -= 5;
     
     return Math.max(0, Math.min(100, score));
   }
