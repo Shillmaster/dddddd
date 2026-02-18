@@ -105,6 +105,8 @@ export class AdaptiveSizingService {
       tierWeights,
       volatility,
       thresholdBlockers,
+      phaseGrade,
+      phaseSampleQuality,
     } = input;
 
     const blockers: string[] = [...thresholdBlockers];
