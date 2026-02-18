@@ -1,9 +1,10 @@
 /**
- * BLOCK 74.2 — Consensus Panel Component
+ * BLOCK 74.2 + 74.3 — Consensus Panel Component
  * 
  * Institutional consensus display with:
  * - Consensus Index (0-100)
  * - Conflict Level visualization
+ * - BLOCK 74.3: Structural Dominance Lock indicator
  * - Vote breakdown by horizon
  * - Resolved decision (BUY/SELL/HOLD + mode + size)
  * - Adaptive meta information
@@ -17,6 +18,7 @@ const CONFLICT_COLORS = {
   MODERATE: { bg: '#fef3c7', text: '#92400e', label: 'Moderate' },
   HIGH: { bg: '#fed7aa', text: '#c2410c', label: 'High Conflict' },
   SEVERE: { bg: '#fecaca', text: '#991b1b', label: 'Severe' },
+  STRUCTURAL_LOCK: { bg: '#e0e7ff', text: '#3730a3', label: 'Structural Lock' },
 };
 
 const ACTION_COLORS = {
@@ -28,7 +30,14 @@ const ACTION_COLORS = {
 const MODE_LABELS = {
   TREND_FOLLOW: 'Trend Follow',
   COUNTER_TREND: 'Counter-Trend',
+  COUNTER_SIGNAL_BLOCKED: 'Counter Blocked',
   WAIT: 'Wait',
+};
+
+const DIRECTION_ICONS = {
+  BULLISH: { symbol: '↑', color: '#16a34a' },
+  BEARISH: { symbol: '↓', color: '#dc2626' },
+  FLAT: { symbol: '→', color: '#6b7280' },
 };
 
 export function ConsensusPanel({ consensus74 }) {
@@ -40,7 +49,12 @@ export function ConsensusPanel({ consensus74 }) {
   
   const {
     consensusIndex,
+    direction,
     conflictLevel,
+    // BLOCK 74.3: Structural dominance fields
+    dominance,
+    structuralLock,
+    timingOverrideBlocked,
     votes,
     conflictReasons,
     resolved,
@@ -49,6 +63,7 @@ export function ConsensusPanel({ consensus74 }) {
   
   const conflictColor = CONFLICT_COLORS[conflictLevel] || CONFLICT_COLORS.MODERATE;
   const actionColor = ACTION_COLORS[resolved?.action] || ACTION_COLORS.HOLD;
+  const dirIcon = DIRECTION_ICONS[direction] || DIRECTION_ICONS.FLAT;
   
   // Determine bias from consensus index
   const bias = consensusIndex > 60 ? 'BULLISH' : consensusIndex < 40 ? 'BEARISH' : 'NEUTRAL';
@@ -56,13 +71,34 @@ export function ConsensusPanel({ consensus74 }) {
 
   return (
     <div style={styles.container}>
-      {/* Header */}
+      {/* Header with Structural Lock Indicator */}
       <div style={styles.header}>
-        <span style={styles.title}>INSTITUTIONAL CONSENSUS</span>
+        <div style={styles.headerLeft}>
+          <span style={styles.title}>INSTITUTIONAL CONSENSUS</span>
+          {/* BLOCK 74.3: Structural Dominance Badge */}
+          {structuralLock && (
+            <span style={styles.lockBadge} data-testid="structural-lock-badge">
+              🔒 STRUCTURAL LOCK
+            </span>
+          )}
+        </div>
         <span style={styles.regimeBadge}>
           {adaptiveMeta?.regime || 'NORMAL'}
         </span>
       </div>
+      
+      {/* BLOCK 74.3: Structural Dominance Alert */}
+      {structuralLock && (
+        <div style={styles.dominanceAlert} data-testid="dominance-alert">
+          <span style={styles.alertIcon}>⚡</span>
+          <span style={styles.alertText}>
+            <strong>Structure ({adaptiveMeta?.structuralDirection})</strong> controls direction
+            {timingOverrideBlocked && (
+              <span style={styles.blockedText}> • Timing override blocked</span>
+            )}
+          </span>
+        </div>
+      )}
       
       {/* Main Metrics Row */}
       <div style={styles.metricsRow}>
