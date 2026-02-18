@@ -1,11 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FractalChartCanvas } from "./FractalChartCanvas";
+import { ForecastSummary7d } from "./ForecastSummary7d";
 
 /**
- * BLOCK 70.2 STEP 2 — Focus-Aware Main Chart
+ * BLOCK 72 — Focus-Aware Main Chart with Horizon-Specific Rendering
  * 
- * UPDATED: Uses focusPack from useFocusPack hook for real horizon binding.
- * When focus changes, the entire forecast and distribution fan changes.
+ * UPDATED: 
+ * - 7D: Shows probability capsule (not trajectory line)
+ * - 14D/30D: Shows aftermath-driven trajectory with fan
+ * - 180D/365D: Normalized % axis for readability
  * 
  * Props:
  * - focus: Current horizon ('7d'|'14d'|'30d'|'90d'|'180d'|'365d')
