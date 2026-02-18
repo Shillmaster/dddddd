@@ -211,6 +211,38 @@ export interface DivergenceMetrics {
   samplePoints: number;      // Number of data points used
 }
 
+// ═══════════════════════════════════════════════════════════════
+// BLOCK 73.3 — UNIFIED PATH
+// ═══════════════════════════════════════════════════════════════
+
+export interface UnifiedPathPoint {
+  t: number;      // Day index (0 = NOW)
+  price: number;  // Absolute price
+  pct: number;    // % from NOW
+}
+
+export interface UnifiedPathMarker {
+  horizon: string;
+  t: number;
+  price: number;
+  pct: number;
+}
+
+export interface UnifiedPathData {
+  anchorPrice: number;
+  horizonDays: number;
+  syntheticPath: UnifiedPathPoint[];
+  replayPath: UnifiedPathPoint[] | null;
+  markers: {
+    d7?: UnifiedPathMarker;
+    d14?: UnifiedPathMarker;
+    d30?: UnifiedPathMarker;
+    d90?: UnifiedPathMarker;
+    d180?: UnifiedPathMarker;
+    d365?: UnifiedPathMarker;
+  };
+}
+
 // BLOCK 73.5.2: Phase Filter
 export interface PhaseFilterInfo {
   phaseId: string;
