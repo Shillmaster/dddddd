@@ -248,7 +248,7 @@ const FractalTerminal = () => {
   const [terminalLoading, setTerminalLoading] = useState(true);
   const symbol = 'BTC';
   
-  // BLOCK 70.2: Use focus-specific data
+  // BLOCK 70.2 + 73.5.2: Use focus-specific data with phase filter support
   const { 
     data: focusData, 
     loading: focusLoading, 
@@ -257,7 +257,11 @@ const FractalTerminal = () => {
     overlay,
     forecast,
     diagnostics,
-    matchesCount
+    matchesCount,
+    // BLOCK 73.5.2: Phase filter controls
+    phaseId,
+    setPhaseId,
+    phaseFilter
   } = useFocusPack(symbol, focus);
 
   // Fetch legacy terminal data (for volatility, sizing, etc.)
