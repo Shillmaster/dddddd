@@ -175,7 +175,7 @@ export function AdminDashboard() {
       <footer className="border-t border-gray-200 bg-white mt-8">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between text-xs text-gray-400">
-            <span>Contract: 7d / 14d / 30d horizons | FROZEN</span>
+            <span>Fractal V2.1</span>
             <span>Institutional Risk Governance Dashboard</span>
           </div>
         </div>
