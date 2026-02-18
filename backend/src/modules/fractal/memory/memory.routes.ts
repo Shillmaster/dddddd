@@ -11,9 +11,9 @@
  */
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { memorySnapshotWriterService } from '../snapshot/snapshot-writer.service.js';
-import { outcomeResolverService } from '../outcome/outcome-resolver.service.js';
-import type { FocusHorizon, SnapshotRole, SnapshotPreset } from '../snapshot/prediction-snapshot.model.js';
+import { memorySnapshotWriterService } from './snapshot/snapshot-writer.service.js';
+import { outcomeResolverService } from './outcome/outcome-resolver.service.js';
+import type { FocusHorizon, SnapshotRole, SnapshotPreset } from './snapshot/prediction-snapshot.model.js';
 
 export async function memoryRoutes(fastify: FastifyInstance): Promise<void> {
   
