@@ -760,6 +760,11 @@ export async function fractalTerminalRoutes(fastify: FastifyInstance): Promise<v
             phase: m.phase || 'UNKNOWN',
           })),
         },
+        // BLOCK 74.1: Horizon Stack (institutional intelligence layer)
+        horizonStack,
+        // BLOCK 74.2: Institutional Consensus
+        consensus74,
+        // Legacy horizonMatrix for backward compatibility
         horizonMatrix,
         structure: {
           globalBias: resolved.bias.dir,
