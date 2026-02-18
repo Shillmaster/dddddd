@@ -26,10 +26,9 @@ def start_ts_backend():
     env["WS_ENABLED"] = "false"
     
     # Use MONGODB_URI from env (Emergent provides complete URI)
-    if "MONGO_URL" in env:
-        env["MONGODB_URI"] = env["MONGO_URL"]
-    elif "MONGODB_URI" not in env:
-        env["MONGODB_URI"] = "mongodb://localhost:27017/fractal_dev"
+    mongo_url = os.environ.get("MONGO_URL", "mongodb://localhost:27017")
+    db_name = os.environ.get("DB_NAME", "fractal_dev")
+    env["MONGODB_URI"] = f"{mongo_url}/{db_name}"
     
     print(f"[Proxy] Starting TypeScript backend on port 8002...")
     print(f"[Proxy] MONGODB_URI={env.get('MONGODB_URI')}")
