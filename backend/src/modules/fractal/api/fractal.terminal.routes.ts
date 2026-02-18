@@ -85,9 +85,9 @@ interface TerminalPayload {
     }>;
   };
   // BLOCK 74.1: Horizon Stack (institutional intelligence layer)
-  horizonStack: HorizonStackItem74[];
+  horizonStack: any[];
   // BLOCK 74.2: Institutional Consensus
-  consensus74: ConsensusResult74Type;
+  consensus74: any;
   // Legacy horizonMatrix for backward compatibility
   horizonMatrix: Array<{
     horizon: HorizonKey;
