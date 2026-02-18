@@ -39,6 +39,7 @@ import { fractalTerminalRoutes } from '../api/fractal.terminal.routes.js';
 import { registerVolatilityRoutes } from '../api/fractal.volatility.routes.js';
 import { registerAlertRoutes } from '../alerts/index.js';
 import { focusPackRoutes } from '../focus/focus.routes.js';
+import { memoryRoutes } from '../memory/memory.routes.js';
 
 // ═══════════════════════════════════════════════════════════════
 // BLOCK 42.1 — Host Dependencies Contract
