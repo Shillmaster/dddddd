@@ -72,6 +72,23 @@ const PRESET_MAX_SIZE: Record<PresetType, number> = {
 };
 
 // ═══════════════════════════════════════════════════════════════
+// BLOCK 73.7: PHASE GRADE MULTIPLIERS
+// Boost only if sampleQuality = OK
+// ═══════════════════════════════════════════════════════════════
+
+const PHASE_GRADE_MULTIPLIER: Record<string, number> = {
+  'A': 1.15,  // Strong phase → boost
+  'B': 1.05,  // Good phase → slight boost
+  'C': 1.00,  // Neutral
+  'D': 0.80,  // Weak phase → reduce
+  'F': 0.60,  // Very weak → significant reduction
+};
+
+// If sample quality not OK, cap multiplier to prevent boost on uncertain data
+const PHASE_LOW_SAMPLE_CAP = 1.00;   // No boost for LOW_SAMPLE
+const PHASE_VERY_LOW_CAP = 0.90;     // Slight penalty for VERY_LOW_SAMPLE
+
+// ═══════════════════════════════════════════════════════════════
 // MAIN SERVICE
 // ═══════════════════════════════════════════════════════════════
 
