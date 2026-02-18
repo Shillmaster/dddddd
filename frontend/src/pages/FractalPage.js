@@ -389,6 +389,16 @@ const FractalTerminal = () => {
             </div>
           )}
 
+          {/* BLOCK 73.6: Phase Performance Heatmap */}
+          {!isLoading && (
+            <div className="mt-6">
+              <PhaseHeatmap 
+                tier={meta?.tier || 'TACTICAL'} 
+                onPhaseFilter={setPhaseId}
+              />
+            </div>
+          )}
+
           {/* P1.4: Volatility Regime Card - Under Chart */}
           {volatility && (
             <div className="mt-4 grid grid-cols-1 md:grid-cols-4 gap-4">
