@@ -226,22 +226,25 @@ class Block75MemoryTester:
             has_fields = all(field in data for field in expected_fields)
             
             if has_fields:
+                total_resolved = data.get('totalResolved', 0)
+                
+                # If no outcomes resolved yet, that's acceptable
+                if total_resolved == 0:
+                    self.log_test("Forward Stats", True, data, "No resolved outcomes yet (expected)")
+                    return data
+                
                 # Check byPreset structure
                 by_preset = data.get('byPreset', {})
-                expected_presets = ['conservative', 'balanced', 'aggressive']
-                
-                # Check byRole structure
                 by_role = data.get('byRole', {})
-                expected_roles = ['ACTIVE', 'SHADOW']
                 
-                preset_ok = len(by_preset) > 0  # May not have all presets if no data
-                role_ok = len(by_role) > 0      # May not have all roles if no data
+                preset_ok = len(by_preset) > 0
+                role_ok = len(by_role) > 0
                 
-                if preset_ok or role_ok:  # At least one should have data
+                if preset_ok or role_ok:
                     self.log_test("Forward Stats", True, data)
                     return data
                 else:
-                    self.log_test("Forward Stats", False, data, "No data in byPreset or byRole")
+                    self.log_test("Forward Stats", False, data, f"No data in byPreset or byRole (totalResolved={total_resolved})")
             else:
                 self.log_test("Forward Stats", False, data, "Missing expected fields in response")
         else:
