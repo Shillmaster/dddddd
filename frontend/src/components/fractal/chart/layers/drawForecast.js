@@ -141,40 +141,56 @@ export function drawForecast(
     ctx.restore();
   }
 
-  // === 5. PRICE PATH WITH CONFIDENCE DECAY ===
-  // Line becomes less saturated towards 30d
+  // === 5. PRICE PATH WITH CATMULL-ROM SPLINE ===
+  // Smooth curve instead of segmented polyline
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   ctx.setLineDash([]);
   
-  // Draw path in segments with decreasing opacity
-  const segments = 10;
-  const segmentLength = Math.floor(pricePath.length / segments);
-  
-  for (let seg = 0; seg < segments; seg++) {
-    const startIdx = seg * segmentLength;
-    const endIdx = Math.min((seg + 1) * segmentLength, pricePath.length - 1);
-    
-    // Confidence decay: alpha goes from 1.0 to 0.6
-    const progress = seg / segments;
-    const alpha = 1 - progress * 0.4;
-    
-    ctx.strokeStyle = `rgba(22, 163, 74, ${alpha})`;
-    ctx.lineWidth = 2.5 - progress * 0.5; // Slightly thinner towards end
-    
-    ctx.beginPath();
-    if (seg === 0) {
-      ctx.moveTo(xRightAnchor, y(pricePath[0]));
-    } else {
-      ctx.moveTo(dayToX(startIdx), y(pricePath[startIdx - 1]));
-    }
-    
-    for (let i = startIdx; i <= endIdx; i++) {
-      ctx.lineTo(dayToX(i + 1), y(pricePath[i]));
-    }
-    ctx.stroke();
+  // Build points array for spline
+  const points = [];
+  points.push({ x: xRightAnchor, y: y(pricePath[0]) });
+  for (let i = 0; i < pricePath.length; i++) {
+    points.push({ x: dayToX(i + 1), y: y(pricePath[i]) });
   }
+  
+  // Glow effect for premium look
+  ctx.shadowColor = 'rgba(22, 163, 74, 0.25)';
+  ctx.shadowBlur = 6;
+  
+  // Draw smooth spline
+  ctx.beginPath();
+  ctx.moveTo(points[0].x, points[0].y);
+  
+  // Catmull-Rom to Bezier conversion
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] || points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] || p2;
+    
+    // Control points
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    
+    ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, p2.x, p2.y);
+  }
+  
+  // Gradient stroke with confidence decay
+  const lineGradient = ctx.createLinearGradient(
+    xRightAnchor, 0,
+    xRightAnchor + forecastZoneWidth, 0
+  );
+  lineGradient.addColorStop(0, "rgba(22, 163, 74, 1)");
+  lineGradient.addColorStop(0.5, "rgba(22, 163, 74, 0.8)");
+  lineGradient.addColorStop(1, "rgba(22, 163, 74, 0.6)");
+  
+  ctx.strokeStyle = lineGradient;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
   ctx.restore();
 
   // === 6. TAIL FLOOR MARKER (UPGRADED) ===
