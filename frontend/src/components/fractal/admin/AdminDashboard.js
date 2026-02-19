@@ -18,6 +18,8 @@ import { SnapshotTimeline } from './SnapshotTimeline';
 import { ShadowDivergencePanel } from './shadow';
 import VolatilityTab from './VolatilityTab';
 import AlertsTab from './AlertsTab';
+import AttributionTab from './AttributionTab';
+import GovernanceTab from './GovernanceTab';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
 
@@ -25,7 +27,9 @@ const TABS = [
   { id: 'overview', label: 'Overview' },
   { id: 'shadow', label: 'Shadow Divergence' },
   { id: 'volatility', label: 'Volatility' },
-  { id: 'alerts', label: 'Alerts' }
+  { id: 'alerts', label: 'Alerts' },
+  { id: 'attribution', label: 'Attribution' },
+  { id: 'governance', label: 'Governance' }
 ];
 
 export function AdminDashboard() {
