@@ -1,7 +1,9 @@
 /**
- * BLOCK 75.3 & 75.4 — Attribution & Policy Routes
+ * BLOCK 75.3 & 75.4 + 75.UI — Attribution & Policy Routes
  * 
- * GET  /api/fractal/v2.1/admin/memory/attribution/summary - Attribution analysis
+ * GET  /api/fractal/v2.1/admin/memory/attribution/summary - Attribution analysis (existing)
+ * GET  /api/fractal/v2.1/admin/attribution - Full Attribution Tab data (NEW)
+ * GET  /api/fractal/v2.1/admin/governance - Full Governance Tab data (NEW)
  * POST /api/fractal/v2.1/admin/governance/policy/dry-run - Calculate policy changes
  * POST /api/fractal/v2.1/admin/governance/policy/propose - Create policy proposal
  * POST /api/fractal/v2.1/admin/governance/policy/apply - Apply proposal (manual)
@@ -12,12 +14,142 @@
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { attributionService } from './attribution.service.js';
+import { attributionAggregatorService } from './attribution-aggregator.service.js';
 import { policyUpdateService, type PolicyUpdateMode } from '../policy/policy-update.service.js';
 
 export async function attributionRoutes(fastify: FastifyInstance): Promise<void> {
   
   // ═══════════════════════════════════════════════════════════════
-  // BLOCK 75.3: ATTRIBUTION
+  // BLOCK 75.UI.1: FULL ATTRIBUTION TAB ENDPOINT
+  // ═══════════════════════════════════════════════════════════════
+  
+  /**
+   * GET /api/fractal/v2.1/admin/attribution
+   * 
+   * Single endpoint → entire Attribution tab
+   * Returns: headline, tiers, regimes, divergence, phases, insights, guardrails
+   */
+  fastify.get('/api/fractal/v2.1/admin/attribution', async (
+    request: FastifyRequest<{
+      Querystring: { 
+        symbol?: string;
+        window?: string;
+        preset?: string;
+        role?: string;
+      }
+    }>
+  ) => {
+    const symbol = request.query.symbol ?? 'BTC';
+    const window = request.query.window ?? '90d';
+    const preset = request.query.preset ?? 'balanced';
+    const role = request.query.role ?? 'ACTIVE';
+    
+    try {
+      const data = await attributionAggregatorService.getAttributionData(
+        symbol,
+        window,
+        preset,
+        role
+      );
+      
+      return data;
+    } catch (err: any) {
+      return { error: true, message: err.message };
+    }
+  });
+  
+  // ═══════════════════════════════════════════════════════════════
+  // BLOCK 75.UI.2: FULL GOVERNANCE TAB ENDPOINT
+  // ═══════════════════════════════════════════════════════════════
+  
+  /**
+   * GET /api/fractal/v2.1/admin/governance
+   * 
+   * Single endpoint → entire Governance tab
+   * Returns: currentPolicy, proposedChanges, guardrails, auditLog
+   */
+  fastify.get('/api/fractal/v2.1/admin/governance', async (
+    request: FastifyRequest<{
+      Querystring: { symbol?: string }
+    }>
+  ) => {
+    const symbol = request.query.symbol ?? 'BTC';
+    
+    try {
+      const currentConfig = await policyUpdateService.getCurrentConfig();
+      const pending = await policyUpdateService.getPendingProposals(symbol);
+      const history = await policyUpdateService.getHistory(symbol, 20);
+      
+      // Get latest proposal if exists
+      const proposedChanges = pending.length > 0 ? {
+        version: pending[0].version,
+        diffs: pending[0].diffs,
+        proposedAt: pending[0].proposedAt
+      } : null;
+      
+      // Build audit log
+      const auditLog = history.map(p => ({
+        id: (p as any)._id.toString(),
+        action: p.status as 'DRY_RUN' | 'PROPOSE' | 'APPLY' | 'REJECT',
+        timestamp: (p.appliedAt || p.proposedAt).toISOString(),
+        actor: p.appliedBy || p.proposedBy || 'system',
+        summary: `${p.version}: ${p.diffs?.length || 0} changes`
+      }));
+      
+      // Calculate drift stats from latest proposal
+      let driftStats = {
+        structuralWeightDrift: 0,
+        timingWeightDrift: 0,
+        tacticalWeightDrift: 0
+      };
+      
+      if (proposedChanges?.diffs) {
+        for (const diff of proposedChanges.diffs) {
+          if (diff.field === 'tierWeights.STRUCTURE') {
+            driftStats.structuralWeightDrift = diff.changePercent;
+          }
+          if (diff.field === 'tierWeights.TIMING') {
+            driftStats.timingWeightDrift = diff.changePercent;
+          }
+          if (diff.field === 'tierWeights.TACTICAL') {
+            driftStats.tacticalWeightDrift = diff.changePercent;
+          }
+        }
+      }
+      
+      // Build guardrails
+      const guardrails = {
+        minSamplesOk: pending.length === 0 || pending[0].guardrailsPass,
+        driftWithinLimit: Math.abs(driftStats.structuralWeightDrift) <= 5 &&
+                          Math.abs(driftStats.timingWeightDrift) <= 5 &&
+                          Math.abs(driftStats.tacticalWeightDrift) <= 5,
+        notInCrisis: true, // TODO: check current regime
+        canApply: pending.length > 0 && pending[0].guardrailsPass,
+        reasons: pending.length > 0 ? pending[0].guardrailViolations : []
+      };
+      
+      return {
+        currentPolicy: {
+          version: 'v2.1.0',
+          tierWeights: currentConfig.tierWeights,
+          horizonWeights: currentConfig.horizonWeights,
+          regimeMultipliers: currentConfig.regimeMultipliers,
+          divergencePenalties: currentConfig.divergencePenalties,
+          phaseGradeMultipliers: currentConfig.phaseGradeMultipliers,
+          updatedAt: new Date().toISOString()
+        },
+        proposedChanges,
+        driftStats,
+        guardrails,
+        auditLog
+      };
+    } catch (err: any) {
+      return { error: true, message: err.message };
+    }
+  });
+  
+  // ═══════════════════════════════════════════════════════════════
+  // BLOCK 75.3: ATTRIBUTION SUMMARY (legacy)
   // ═══════════════════════════════════════════════════════════════
   
   /**
