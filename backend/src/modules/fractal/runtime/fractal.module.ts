@@ -209,6 +209,8 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   console.log('[Fractal] BLOCK 75.2: Forward Truth Outcome Resolver registered');
   console.log('[Fractal] BLOCK 75.3: Attribution Service registered');
   console.log('[Fractal] BLOCK 75.4: Policy Governance registered');
+  console.log('[Fractal] BLOCK 76.1: Consensus Pulse registered');
+  console.log('[Fractal] BLOCK 76.2: Weekly Digest registered');
   console.log('[Fractal] FREEZE: Contract v2.1.0 frozen, guards active');
   console.log('[Fractal] Chart + Overlay endpoints registered');
 }
