@@ -13,7 +13,7 @@
         "issue": "Frontend cannot fetch data from backend due to external ingress configuration issues", 
         "symptoms": "404 errors for all API calls to external URL, WebSocket connection failures",
         "affected_selectors": ["canvas", "[data-testid='phase-tooltip']"],
-        "technical_details": "REACT_APP_BACKEND_URL points to https://fractal-engine.preview.emergentagent.com but ingress returns 404 for /api/* routes. Local backend on localhost:8001 works perfectly.",
+        "technical_details": "REACT_APP_BACKEND_URL points to https://adaptive-fractal.preview.emergentagent.com but ingress returns 404 for /api/* routes. Local backend on localhost:8001 works perfectly.",
         "fix_priority": "CRITICAL"
       },
       {
@@ -65,7 +65,7 @@
     ],
     "technical_context": "Backend phase stats functionality is 100% working on localhost:8001. Frontend loads correctly but gets 404 errors when trying to fetch data from external URL. This is purely a deployment/infrastructure issue, not a code issue.",
     "verification_steps": [
-      "Test: curl https://fractal-engine.preview.emergentagent.com/api/fractal/v2.1/chart?symbol=BTC (should return JSON, not 404)",
+      "Test: curl https://adaptive-fractal.preview.emergentagent.com/api/fractal/v2.1/chart?symbol=BTC (should return JSON, not 404)",
       "After fix: Verify phase tooltips appear when hovering over chart phases",
       "Confirm WebSocket connections work without constant reconnection attempts"
     ]

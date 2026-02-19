@@ -1,0 +1,152 @@
+<analysis>**original_problem_statement:**
+Клонируй репозиторий, подними фронт, подними бэк, подними админку и в ту админку, которая у нас на момент реализована, и в последующем мы будем сейчас дорабатывать ту логику, на которой мы остановились, не доработали. И важно: мы работаем только с областью Fractal и рабо-- все остальные модули, которые там есть, ты игнорируешь и работаешь только с частью по Fractal.
+
+**PRODUCT REQUIREMENTS:**
+The user wants to build out a sophisticated financial analysis tool called Fractal Terminal. The work is divided into major BLOCKS.
+- **BLOCK 75 (Completed):** Implement a . This involves:
+    - : Daily saving of system predictions (Prediction Snapshot).
+    - : Validating snapshots against real market outcomes after a set period.
+    - : Determining which parts of the system's logic were correct.
+    - : Proposing adjustments to system weights based on performance.
+- **BLOCK 75.UI (Completed):** Create Admin UI tabs for the new memory layer.
+    - : To visualize system performance and attribution.
+    - : To review and manually apply proposed policy changes.
+- **BLOCK 76 (In Progress):** Implement the .
+    - : A header component showing the 7-day trend of the system's consensus.
+    - : A weekly summary report sent to Telegram.
+    - : A header component showing the current market phase and its reliability.
+- **BLOCK 77 (Future):** Implement  for semi-automatic system calibration.
+
+**User's preferred language**:
+The user's primary language is **Russian**. The next agent MUST respond in Russian.
+
+**what currently exists?**
+The agent successfully cloned the repository, set up the full-stack environment (Node.js/TypeScript backend, React frontend, MongoDB), and verified that all services are running. The backend is a Node.js/TypeScript application proxied by a Python FastAPI server.
+
+The full implementation of  and the corresponding  (Attribution and Governance tabs in the admin panel) is complete and tested. All required backend services, database models, API endpoints, cron job integrations, and frontend components have been created and are functional.
+
+**Last working item**:
+- Last item agent was working: The agent started implementing **BLOCK 76: Institutional Intelligence Layer**. Specifically, it created the backend file structure for  and . It was in the process of registering the new API routes for this module.
+- Status: **IN PROGRESS**
+- Agent Testing Done: N
+- Which testing method agent to use? both
+- User Testing Done: N
+
+**All Pending/In progress Issue list**:
+There are no pending issues. The project is following the user's detailed roadmap.
+
+**In progress Task List**:
+- Task 1: **Complete Backend for BLOCK 76.1 (Consensus Pulse) & 76.2 (Weekly Digest)**
+    - Priority: P0
+    - Where to resume: The agent has created the file structure and was about to register the new routes. The next step is to populate the service logic and ensure the new routes are correctly added to the main application module.
+    - What will be achieved with this? This will create the necessary API endpoints for the new frontend components and the weekly Telegram report.
+    - Status: IN PROGRESS
+    - Should Test frontend/backend/both after fix? backend
+    - Blocked on something: No.
+
+**Upcoming and Future Tasks**
+- **Upcoming Tasks:**
+    - **P0: BLOCK 76.1 - Frontend Implementation:**
+        - Create the  React component and the  hook to fetch data from the new backend endpoint.
+        - Integrate this component into the main terminal page () above the main chart.
+    - **P1: BLOCK 76.2 - Cron Job Integration:**
+        - Create a new weekly cron job that utilizes the  to send the summary report to Telegram.
+    - **P2: BLOCK 76.3 - Phase Strength Indicator:**
+        - Implement the backend endpoint and frontend component for the Phase Strength Indicator to be displayed in the terminal header.
+- **Future Tasks:**
+    - **P0: BLOCK 77 - Adaptive Weight Learning:**
+        - Begin implementation of the semi-automatic weight adjustment mechanism, where the system learns from its performance within defined guardrails.
+    - **P1: Consensus Drift Tracker (30d timeline):**
+        - Implement a more detailed 30-day timeline view for consensus drift.
+
+**Completed work in this session**
+- **Environment Setup:** Cloned the project, installed all dependencies, and successfully launched the backend, frontend, and database services using supervisor.
+- **BLOCK 75 - Memory & Self-Validation Layer (COMPLETE):**
+  - **Snapshot Persistence (75.1):** Implemented  and the writer service/API to save daily system predictions. Located in .
+  - **Outcome Validator (75.2):** Implemented  and the resolver service/API to match predictions with real market outcomes. Located in .
+  - **Attribution & Governance (75.3 & 75.4):** Implemented the backend services and APIs for attribution analysis and policy management. Located in .
+  - **Cron Integration:** All BLOCK 75 services have been integrated into the daily cron job.
+- **BLOCK 75.UI - Admin Panel Tabs (COMPLETE):**
+  - **Attribution Tab:** A fully functional admin tab to view system performance across different dimensions (tiers, regimes, divergence). Component: .
+  - **Governance Tab:** An admin tab to view the current system policy, see proposed changes, and manually apply them with full audit capabilities. Component: .
+- **Testing:** All completed features were tested via API calls, frontend screenshots, and the .
+
+**Known issue recurrence from previous fork**
+- No issue recurrence from the previous fork was noted.
+
+**Code Architecture**
+
+
+**Key Technical Concepts**
+- **Backend:** Node.js, TypeScript, Express.js
+- **Frontend:** React.js
+- **Database:** MongoDB
+- **Architecture:** A Python FastAPI wrapper () is used to start and proxy requests to the main Node.js backend. The backend itself is highly modular. Services are managed by .
+- **Data Flow:** The system runs daily jobs to generate predictions (), resolves them against market data (), and uses this forward truth to generate attribution stats and propose policy changes, which can be viewed and applied in the admin UI.
+
+**key DB schema**
+- : Stores system state predictions.
+  - 
+  - Unique index: 
+-  (or ): Stores the realized truth for a snapshot.
+  - 
+  - Unique index: 
+
+**All files of reference**
+- **Created/Updated in this session:**
+  - : Contains the full backend implementation for BLOCK 75.
+  - : Contains the new backend stubs for BLOCK 76.
+  - : UI for the Attribution tab.
+  - : UI for the Governance tab.
+  - : Updated to register all new modules.
+  - : Updated to integrate BLOCK 75 logic.
+  - : Updated to host the new tabs.
+  - : Document updated with the latest progress.
+
+**key api endpoints**
+- **Admin Memory API (BLOCK 75):**
+  - : Creates daily prediction snapshots.
+  - : Resolves matured snapshots against market data.
+  - : Retrieves the latest snapshot.
+- **Admin Attribution & Governance API (BLOCK 75.UI):**
+  - : Aggregates data for the Attribution UI tab.
+  - : Aggregates data for the Governance UI tab.
+  - : Actions for policy management.
+- **Pulse API (BLOCK 76 - In Progress):**
+  - : Endpoint for the Consensus Drift Tracker.
+
+**Critical Info for New Agent**
+- The user provides extremely detailed, institutional-grade specifications. Adhere to them precisely. Do not simplify or take shortcuts.
+- The project follows a clear, block-based roadmap (BLOCK 75 -> 76 -> 77). Continue this pattern.
+- The backend architecture uses a Python proxy () to run the main Node.js application. All backend logic should be in TypeScript.
+- All new features must be integrated into the existing modular structure in .
+- The agent has just created the file structure for . The immediate next step is to populate the logic in these files and register the new routes in .
+
+**documents and test reports created in this job**
+- 
+- 
+- 
+- 
+
+**Last 10 User Messages and any pending HUMAN messages**
+1. **User:** OKs the plan and tells the agent to proceed with BLOCK 75.UI.2.
+2. **User:** Gives detailed specs for BLOCK 75.UI.2 (Policy Governance Tab).
+3. **User:** Lays out the next roadmap: BLOCK 76 (Consensus Drift Tracker, Reliability Curve, Phase Indicator) and BLOCK 77 (Adaptive Weight Learning). Asks to start with 76.1.
+4. **User:** Provides detailed specs for BLOCK 76.1 (Consensus Pulse Layer).
+5. **User:** Lays out a plan to do 76.1 (Consensus Pulse) and 76.2 (Weekly Digest) together.
+6. **User:** Asks if the agent is ready to proceed with the implementation plan for 76.1 and 76.2.
+7. **Agent:** Confirms and starts implementation.
+8. **Agent:** Creates backend files for .
+9. **Agent:** Creates backend files for .
+10. **Agent:** Creates backend files for  and the module index. The agent is currently working on wiring these new modules into the application.
+
+**Project Health Check:**
+- The project is in a healthy state. The application is fully running, and recent feature additions (BLOCK 75) have been completed and tested.
+
+**3rd Party Integrations**
+- None explicitly mentioned or used beyond the core stack (React, Node.js/TypeScript, MongoDB, FastAPI).
+
+**Testing status**
+- Testing agent used after significant changes: YES
+- Test files created: No new test files were created, but existing test infrastructure was used via .
+- Known regressions: None.</analysis>
