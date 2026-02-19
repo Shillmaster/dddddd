@@ -21,6 +21,7 @@ import { ConsensusPanel } from '../components/fractal/ConsensusPanel';
 import { HorizonSelector, HorizonPills } from '../components/fractal/HorizonSelector';
 import { FocusInfoPanel, FocusStatsBadge } from '../components/fractal/FocusInfoPanel';
 import { PhaseHeatmap } from '../components/fractal/PhaseHeatmap';
+import { ConsensusPulseStrip } from '../components/fractal/ConsensusPulseStrip';
 import { useFocusPack, HORIZONS, getTierColor, getTierLabel } from '../hooks/useFocusPack';
 
 const API_BASE = process.env.REACT_APP_BACKEND_URL || '';
