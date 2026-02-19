@@ -318,6 +318,11 @@ const FractalTerminal = () => {
       
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-6 py-6">
+        {/* BLOCK 76.1: Consensus Pulse Strip - 7d Intelligence */}
+        <div className="mb-4">
+          <ConsensusPulseStrip symbol={symbol} />
+        </div>
+        
         {/* BLOCK 70.2: Horizon Selector - Controls EVERYTHING */}
         <div className="mb-6">
           <HorizonSelector 
