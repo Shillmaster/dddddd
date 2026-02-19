@@ -113,7 +113,27 @@ API Endpoints:
 - [ ] Mobile-optimized dashboard
 
 ## Next Tasks
-1. Add Attribution tab to Admin Panel UI
-2. Add Policy Governance tab to Admin Panel UI
-3. Consensus Drift Tracker mini-chart
-4. Weekly attribution report in Telegram
+1. Consensus Drift Tracker (7d mini-chart in terminal header)
+2. Weekly attribution digest in Telegram
+3. Backtest replay from snapshots
+
+## Prioritized Backlog
+
+### P0 (Critical)
+- [x] BLOCK 75 — Memory & Self-Validation Layer
+- [x] BLOCK 75.UI — Attribution + Governance Tabs
+
+### P1 (High)
+- [ ] Consensus Drift Tracker (7d history mini-chart)
+- [ ] Phase Strength Indicator in terminal header
+- [ ] Weekly TG attribution digest
+
+### P2 (Medium)
+- [ ] Dominance History visualization
+- [ ] Backtest replay from snapshots
+- [ ] Enhanced calibration charts
+
+### P3 (Future)
+- [ ] Multi-asset support (ETH, SOL)
+- [ ] Real-time WebSocket updates
+- [ ] Mobile-optimized dashboard
