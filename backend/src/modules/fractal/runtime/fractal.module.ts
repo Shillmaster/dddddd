@@ -179,6 +179,9 @@ export async function registerFractalModule(fastify: FastifyInstance, deps?: Par
   // BLOCK 75.3 & 75.4 — Attribution & Policy Governance
   await fastify.register(attributionRoutes);
 
+  // BLOCK 76.1 & 76.2 — Consensus Pulse + Weekly Digest
+  await fastify.register(consensusPulseRoutes);
+
   // Run bootstrap in background (non-blocking)
   const bootstrap = new FractalBootstrapService();
   bootstrap.ensureBootstrapped().catch(err => {
