@@ -8,8 +8,7 @@
 
 import { attributionAggregatorService } from '../memory/attribution/attribution-aggregator.service.js';
 import { consensusPulseService } from './consensus-pulse.service.js';
-import { policyUpdateService } from '../memory/policy/policy-update.service.js';
-import { sendTelegramMessage } from '../alerts/telegram.service.js';
+import { tgSendMessage, getTelegramConfig } from '../ops/telegram.notifier.js';
 
 // ═══════════════════════════════════════════════════════════════
 // TYPES
@@ -184,15 +183,28 @@ export class WeeklyDigestService {
       const digest = await this.buildDigest(symbol);
       const message = this.formatTelegramMessage(digest);
       
-      // Send to Telegram (bypasses daily limit as it's weekly)
-      const sent = await sendTelegramMessage(message);
+      // Get Telegram config
+      const tgConfig = getTelegramConfig();
       
-      if (sent) {
+      if (!tgConfig.enabled) {
+        console.log('[WeeklyDigest] Telegram not enabled or configured');
+        return { success: false, message: 'Telegram not configured (set FRACTAL_ALERTS_ENABLED=true and TG_BOT_TOKEN/TG_ADMIN_CHAT_ID)' };
+      }
+      
+      // Send to Telegram (bypasses daily limit as it's weekly)
+      const result = await tgSendMessage(console, {
+        token: tgConfig.token,
+        chatId: tgConfig.chatId,
+        text: message,
+        parseMode: 'HTML'
+      });
+      
+      if (result.ok) {
         console.log('[WeeklyDigest] Sent successfully');
         return { success: true, message: 'Weekly digest sent' };
       } else {
-        console.log('[WeeklyDigest] Failed to send (TG disabled or error)');
-        return { success: false, message: 'Telegram send failed' };
+        console.log('[WeeklyDigest] Failed to send:', result.error);
+        return { success: false, message: result.error || 'Telegram send failed' };
       }
     } catch (err: any) {
       console.error('[WeeklyDigest] Error:', err);
