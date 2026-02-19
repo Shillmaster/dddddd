@@ -21,7 +21,7 @@ Self-learning institutional trading terminal for BTC. Now with Memory & Self-Val
 
 ## What's Been Implemented
 
-### Session: 2026-02-18
+### Session: 2026-02-18 (continued 2026-02-19)
 
 #### BLOCK 74 (Previous) — Verified Working
 - 74.1: Horizon Stack View (6 horizons with adaptive weights)
@@ -38,12 +38,6 @@ Self-learning institutional trading terminal for BTC. Now with Memory & Self-Val
 - Tier weights (STRUCTURE/TACTICAL/TIMING)
 - Idempotent writes (unique index on symbol+asofDate+focus+role+preset)
 
-API:
-- `POST /api/fractal/v2.1/admin/memory/write-snapshots`
-- `GET /api/fractal/v2.1/admin/memory/snapshots/latest`
-- `GET /api/fractal/v2.1/admin/memory/snapshots/range`
-- `GET /api/fractal/v2.1/admin/memory/snapshots/count`
-
 ##### 75.2 — Forward Truth Outcome Resolver
 - MongoDB model: `FractalPredictionOutcome`
 - Resolves matured snapshots with real price data
@@ -51,19 +45,11 @@ API:
 - Tier-level truth attribution (STRUCTURE/TACTICAL/TIMING hits)
 - Band hit tracking (P10-P90)
 
-API:
-- `POST /api/fractal/v2.1/admin/memory/resolve-outcomes`
-- `GET /api/fractal/v2.1/admin/memory/forward-stats`
-- `GET /api/fractal/v2.1/admin/memory/calibration`
-
 ##### 75.3 — Attribution Service
 - Tier accuracy analysis (which tier performed best)
 - Regime-specific accuracy (CRISIS/HIGH/NORMAL/LOW)
 - Divergence impact analysis (grade → error correlation)
 - Auto-generated insights
-
-API:
-- `GET /api/fractal/v2.1/admin/memory/attribution/summary`
 
 ##### 75.4 — Policy Governance
 - MongoDB model: `FractalPolicyProposal`
@@ -72,19 +58,34 @@ API:
 - APPLY mode for manual confirmation
 - Guardrails: min samples, max drift ±5%, weight normalization
 
-API:
-- `POST /api/fractal/v2.1/admin/governance/policy/dry-run`
-- `POST /api/fractal/v2.1/admin/governance/policy/propose`
-- `POST /api/fractal/v2.1/admin/governance/policy/apply`
-- `GET /api/fractal/v2.1/admin/governance/policy/current`
-- `GET /api/fractal/v2.1/admin/governance/policy/history`
-- `GET /api/fractal/v2.1/admin/governance/policy/pending`
+#### BLOCK 75.UI — Admin Panel Tabs ✅ COMPLETE
 
-##### Cron + Telegram Integration
-- Daily job now includes MEMORY_SNAPSHOTS step
-- Writes snapshots after audit
-- Resolves matured outcomes
-- Telegram message includes memory stats: `🧠 MEMORY: wrote X | resolved Y`
+##### 75.UI.1 — Attribution Tab
+Route: `/admin/fractal?tab=attribution`
+
+Features:
+- **Controls**: Window (30d/90d/180d/365d), Preset, Role with URL sync
+- **Headline KPIs**: Hit Rate, Expectancy, Sharpe, Max DD, Calibration, Avg Divergence
+- **Tier Attribution Table**: STRUCTURE/TACTICAL/TIMING with hitRate, expectancy, sharpe, maxDD, grade
+- **Regime Attribution**: Performance by volatility regime (LOW/NORMAL/HIGH/CRISIS)
+- **Divergence Impact**: Grade A→F with hit rates and expectancy
+- **Phase Attribution**: Phase types with grades and sizing multipliers
+- **Auto Insights**: Deterministic rules generating actionable insights
+- **Guardrails**: Insufficient data warnings, grade capping
+
+##### 75.UI.2 — Governance Tab
+Route: `/admin/fractal?tab=governance`
+
+Features:
+- **Current Policy**: Tier Weights, Divergence Penalties, Phase Multipliers
+- **Proposed Changes**: Diff view with old→new values and % change
+- **Guardrails Status**: Min Samples ✅, Drift ≤5% ✅, Not in Crisis ✅
+- **Actions**: Dry Run, Propose, Apply (with confirmation modal)
+- **Audit Log**: History of policy changes
+
+API Endpoints:
+- `GET /api/fractal/v2.1/admin/attribution` - Full Attribution tab data
+- `GET /api/fractal/v2.1/admin/governance` - Full Governance tab data
 
 ## Testing Status
 - Backend: 100% (11/11 endpoints working)
