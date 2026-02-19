@@ -41,6 +41,7 @@ import { registerAlertRoutes } from '../alerts/index.js';
 import { focusPackRoutes } from '../focus/focus.routes.js';
 import { memoryRoutes } from '../memory/memory.routes.js';
 import { attributionRoutes } from '../memory/attribution/attribution.routes.js';
+import { consensusPulseRoutes } from '../pulse/consensus-pulse.routes.js';
 
 // ═══════════════════════════════════════════════════════════════
 // BLOCK 42.1 — Host Dependencies Contract
